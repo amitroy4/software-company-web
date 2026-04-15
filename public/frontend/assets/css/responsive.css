@@ -1,0 +1,174 @@
+/* Mobile devices (max-width: 425px) */
+@media (max-width: 425px) {
+    .main-slider-one__sub-title{
+        padding-top: 30px !important;
+    }
+
+    .main-slider-one__title{
+        font-size: 30px !important;
+        line-height: 40px !important;
+        width: 90% !important;
+    }
+
+    .sec-title-four{
+        margin-top: 20px !important;
+    }
+
+    .sec-title-four{
+        padding-top: 20px !important;
+        text-align: center !important;
+    }
+
+    .sec-title-two__title{
+        font-size: 30px !important;
+        line-height: 40px !important;
+        text-align: center !important;
+    }
+
+    .about-four__content__fact{
+        margin-bottom: 30px !important;
+    }
+
+    .cta-eleven__box li{
+        width: 100% !important;
+        text-align: center !important;
+    }
+
+    .cta-eleven__box li .cta-eleven__box__icon{
+       margin-left: 21% !important;
+    }
+
+    .owl-stage-outer .blog-card-five__content{
+        height: 220px !important;
+    }
+
+    .cta-five .cta-eleven__box{
+       margin-top: 20px !important;
+    }
+
+    .cta-five .cta-eleven__box a{
+        margin: 0 auto !important;
+    }
+
+    .solution-two__image{
+        margin-bottom: 20px !important;
+    }
+
+    .blog-card .blog-card-two__meta{
+        width: 100% !important;
+    }
+
+    .blog-card .blog-card__content{
+        width: 100% !important;
+    }
+
+    .project-details-faq__image{
+        margin-bottom: 30px !important;
+    }
+
+    .blog-details__content .blog-details__image img{
+         height: 220px !important;
+    }
+
+}
+/* Small screens (426px and below) */
+@media (min-width: 426px) and (max-width: 767px) {
+    .cta-eleven__box li{
+        width: 100% !important;
+        text-align: center !important;
+    }
+    .cta-eleven__box li .cta-eleven__box__icon{
+       margin-left: 34% !important;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+    .skill-one__content .cta-eleven__box{
+        width: 100% !important;
+        display: flex;
+        justify-content: center;
+    }
+}
+/* Tablets and small screens (426px to 991px) */
+@media (min-width: 426px) and (max-width: 991px) {
+    .main-slider-one__sub-title{
+        padding-top: 30px !important;
+    }
+    .main-slider-one__title{
+        font-size: 40px !important;
+        line-height: 45px !important;
+        width: 80% !important;
+    }
+        .about-four__content__fact{
+        margin-bottom: 30px !important;
+    }
+
+    .solution-two__image{
+        margin-bottom: 20px !important;
+    }
+    .sec-title-four{
+        margin-top: 20px !important;
+    }
+
+
+    .cta-five .cta-eleven__box{
+       margin-top: 20px !important;
+    }
+
+    .cta-five .cta-eleven__box a{
+        margin: 0 auto !important;
+    }
+
+    .sec-title-four{
+        padding-top: 20px !important;
+        text-align: center !important;
+    }
+
+    .cta-five__content .cta-five__content__title{
+        font-size: 20px !important;
+        line-height: 25px !important;
+    }
+    .owl-stage-outer .blog-card-five__content{
+        height: 220px !important;
+    }
+    .blog-card .blog-card-two__meta{
+        width: 100% !important;
+    }
+
+    .blog-card .blog-card__content{
+        width: 100% !important;
+    }
+}
+
+/* Medium desktops (992px to 1189px) */
+@media (min-width: 992px) and (max-width: 1189px) {
+    .owl-stage-outer .blog-card-five__content{
+        height: 220px !important;
+    }
+    .blog-card .blog-card-two__meta{
+        width: 100% !important;
+    }
+
+    .blog-card .blog-card__content{
+        width: 100% !important;
+    }
+}
+
+/* Large desktops (1190px to 1599px) */
+@media (min-width: 1190px) and (max-width: 1599px) {
+    .owl-stage-outer .blog-card-five__content{
+        height: 220px !important;
+    }
+    .blog-card .blog-card-two__meta{
+        width: 100% !important;
+    }
+
+    .blog-card .blog-card__content{
+        width: 100% !important;
+    }
+}
+
+/* Extra large desktops (1600px and above) */
+@media (min-width: 1600px) {
+  /* Your CSS rules for extra-large desktop screens */
+}
