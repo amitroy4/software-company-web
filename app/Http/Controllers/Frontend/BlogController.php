@@ -5,49 +5,59 @@ namespace App\Http\Controllers\Frontend;
 use App\Models\Blog;
 use App\Models\BlogCategory;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use App\Http\Controllers\Controller;
 
 class BlogController extends Controller
 {
+    private function blogListingQuery()
+    {
+        return Blog::with('blogCategory')->where('status', true)->latest();
+    }
+
     public function blogs()
     {
-        $blogs = Blog::with('blogCategory')->where('status', true)->latest()->get();
+        $blogs = $this->blogListingQuery()->paginate(9)->withQueryString();
         return view('frontend.blogs', compact('blogs'));
     }
 
     public function blogDetails($slug)
     {
-        $blogs = Blog::with('blogCategory')
-            ->where('status', true)
-            ->where('slug', '!=', $slug)
-            ->latest()
-            ->take(3)
-            ->get();
+        $blogDetails = Cache::remember("frontend.blog.details.{$slug}", now()->addMinutes(10), function () use ($slug) {
+            $blogs = Blog::with('blogCategory')
+                ->where('status', true)
+                ->where('slug', '!=', $slug)
+                ->latest()
+                ->take(3)
+                ->get();
 
-        $blog = Blog::with('blogCategory')
-            ->where('status', true)
-            ->where('slug', $slug)
-            ->firstOrFail();
+            $blog = Blog::with('blogCategory')
+                ->where('status', true)
+                ->where('slug', $slug)
+                ->firstOrFail();
 
-        $categories = BlogCategory::withCount([
-            'blog' => function ($query) {
-                $query->where('status', true);
-            }
-        ])->get();
-        $allTags = Blog::where('status', true)
-            ->pluck('tags')
-            ->flatMap(fn($tags) => explode(',', $tags))
-            ->map(fn($tag) => trim($tag))
-            ->unique()
-            ->filter()
-            ->values();
+            $categories = BlogCategory::withCount([
+                'blog' => function ($query) {
+                    $query->where('status', true);
+                }
+            ])->get();
+            $allTags = Blog::where('status', true)
+                ->pluck('tags')
+                ->flatMap(fn($tags) => explode(',', $tags))
+                ->map(fn($tag) => trim($tag))
+                ->unique()
+                ->filter()
+                ->values();
 
-        return view('frontend.blog_details', compact('blogs', 'blog', 'categories', 'allTags'));
+            return compact('blogs', 'blog', 'categories', 'allTags');
+        });
+
+        return view('frontend.blog_details', $blogDetails);
     }
 
     public function newsAndBlogs()
     {
-        $blogs = Blog::where('status', true)->latest()->get();
+        $blogs = $this->blogListingQuery()->paginate(9)->withQueryString();
         return view('frontend.blogs', compact('blogs'));
     }
 
@@ -55,10 +65,10 @@ class BlogController extends Controller
     {
         // dd($request->all());
         $tag = $request->query('tag');
-        $blogs = Blog::where('status', true)
+        $blogs = $this->blogListingQuery()
             ->where('tags', 'LIKE', "%{$tag}%")
-            ->latest()
-            ->get();
+            ->paginate(9)
+            ->withQueryString();
         return view('frontend.blogs', compact('blogs', 'tag'));
     }
 
@@ -67,10 +77,10 @@ class BlogController extends Controller
         // dd($request->all());
 
         $category = BlogCategory::where('id', $request->query('id'))->firstOrFail();
-        $blogs = Blog::where('status', true)
+        $blogs = $this->blogListingQuery()
             ->where('blog_category_id', $category->id)
-            ->latest()
-            ->get();
+            ->paginate(9)
+            ->withQueryString();
 
         return view('frontend.blogs', compact('blogs', 'category'));
     }

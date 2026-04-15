@@ -6,7 +6,7 @@
     <div class="hero-bg">
     @foreach ($allCoverImages as $coverImage)
       @if ($coverImage->page_name == 'news')
-      <img src="{{ asset('storage/' . $coverImage->cover_image) }}" alt="Contact Qbit Tech">
+      <img src="{{ asset('storage/' . $coverImage->cover_image) }}" alt="Contact InfyraSoft" loading="eager" fetchpriority="high" decoding="async">
       @endif
     @endforeach
     </div>
@@ -34,7 +34,7 @@
       <div class="blog-details__content">
         <div class="blog-details__image">
         <img src="{{ asset($blog->image ?? 'frontend/assets/images/ui.jpg') }}" alt="{{ $blog->title }}"
-          style="width: 670px; height: 500px; object-fit: cover;">
+          style="width: 670px; height: 500px; object-fit: cover;" loading="eager" fetchpriority="high" decoding="async">
 
         </div><!-- /.blog-details__image -->
         <div class="blog-details__meta">
@@ -99,7 +99,7 @@
         <li class="sidebar__posts__item">
         <div class="sidebar__posts__image">
         <img src="{{ asset($recent->image ?? 'frontend/assets/images/ui.jpg') }}" alt="{{ $recent->title }}"
-          style="width: 80px; height: 60px; object-fit: cover;">
+          style="width: 80px; height: 60px; object-fit: cover;" loading="lazy" decoding="async">
         </div>
         <div class="sidebar__posts__content">
         <p class="sidebar__posts__meta">
@@ -127,7 +127,7 @@
         <div class="">
         <div class="d-flex blog-card-four__content">
           <div class="w-10 m-0 me-5 comments-one__card__image">
-          <img src="assets/images/amit.jpg" class="w-100" alt="tolak">
+          <img src="assets/images/amit.jpg" class="w-100" alt="tolak" loading="lazy" decoding="async">
           </div><!-- /.comments-one__card__image -->
           <div class="w-90">
           <ul class="list-unstyled blog-card-four__meta">
@@ -154,7 +154,7 @@
 
         <div class="mt-5 d-flex blog-card-four__content">
           <div class="w-10 m-0 me-5 comments-one__card__image">
-          <img src="assets/images/amit.jpg" class="w-100" alt="tolak">
+          <img src="assets/images/amit.jpg" class="w-100" alt="tolak" loading="lazy" decoding="async">
           </div><!-- /.comments-one__card__image -->
           <div class="w-90">
           <ul class="list-unstyled blog-card-four__meta">
@@ -180,7 +180,7 @@
         </div>
         <div class="mt-5 d-flex blog-card-four__content">
           <div class="w-10 m-0 me-5 comments-one__card__image">
-          <img src="assets/images/amit.jpg" class="w-100" alt="tolak">
+          <img src="assets/images/amit.jpg" class="w-100" alt="tolak" loading="lazy" decoding="async">
           </div><!-- /.comments-one__card__image -->
           <div class="w-90">
           <ul class="list-unstyled blog-card-four__meta">

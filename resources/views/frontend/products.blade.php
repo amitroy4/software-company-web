@@ -6,7 +6,7 @@
    <div class="hero-bg">
       @foreach($allCoverImages as $coverImage)
       @if ($coverImage->page_name == 'products')
-      <img src="{{ asset('storage/' . $coverImage->cover_image) }}" alt="Contact Qbit Tech">
+      <img src="{{ asset('storage/' . $coverImage->cover_image) }}" alt="Contact InfyraSoft">
         @endif
     @endforeach
    </div>

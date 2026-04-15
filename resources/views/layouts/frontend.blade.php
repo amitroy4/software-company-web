@@ -8,7 +8,7 @@
         <title>@yield('title') | {{$setting->company_name}}</title>
         <!-- favicons Icons -->
         <!--<link rel="manifest" href="{{ asset('frontend') }}/assets/images/favicons/site.webmanifest" />-->
-        <meta name="description" content="QBit Tech is a modern php Template for Business, It Solution, Corporate, Agency, Portfolio shops. The template perfectly fits Beauty Spa, Salon, and Wellness
+        <meta name="description" content="InfyraSoft is a modern php Template for Business, It Solution, Corporate, Agency, Portfolio shops. The template perfectly fits Beauty Spa, Salon, and Wellness
          Treatments websites and businesses." />
 
         <link rel="icon" href="{{ asset('storage/' . ($setting->favicon ?? 'default-favicon.ico')) }}"  />
@@ -57,7 +57,7 @@
 
                         <div class="main-header-six__logo">
                             <a href="{{'/'}}">
-                            <img src="{{ asset('storage/' . $setting->logo_dark ) }}" alt="QBit Tech" width="200">
+                            <img src="{{ asset('storage/' . $setting->logo_dark ) }}" alt="InfyraSoft" width="200">
 
                             </a>
                         </div>
@@ -71,9 +71,9 @@
                                     <a href="{{'/'}}">Start Here</a>
                                 </li>
                                 <li class="dropdown {{ request()->routeIs('about-us.page') || request()->routeIs('powerhouse.team') ? 'current' : '' }}">
-                                    <a href="#">Explore QBit Tech</a>
+                                    <a href="#">Explore InfyraSoft</a>
                                     <ul>
-                                        <li><a href="{{ route('about-us.page') }}">Roots of QBit Tech</a></li>
+                                        <li><a href="{{ route('about-us.page') }}">Roots of InfyraSoft</a></li>
                                          <!-- <li><a href="why-choose.php">Difference We Make</a></li>  -->
                                          <!-- <li><a href="how-we-work.php">From Concept to Creation</a></li>  -->
                                         <li><a href="{{ route('powerhouse.team') }}">Powerhouse Team</a></li>
@@ -148,7 +148,7 @@
                                 @if ($setting->logo_dark)
                                 <a href="{{'/'}}" class="footer-widget__logo">
                                     <img src="{{ asset('storage/' . $setting->logo_dark) }}" width="225"
-                                        alt="QBit Tech">
+                                        alt="InfyraSoft">
                                 </a>
                                 @endif
 
@@ -203,7 +203,7 @@
                         </div><!-- /.col-md-6 -->
                         <div class="col-md-6 col-lg-4">
                             <div class="footer-widget footer-widget--links footer-widget--last">
-                                <h2 class="footer-widget__title">Explore QBit Tech</h2><!-- /.footer-widget__title -->
+                                <h2 class="footer-widget__title">Explore InfyraSoft</h2><!-- /.footer-widget__title -->
                                 <ul class="list-unstyled footer-widget__links">
                                     <li><a href="{{ route('gallery.page') }}">Gallery</a></li>
                                     <li><a href="{{route('powerhouse.team')}}">Team</a></li>
@@ -312,12 +312,13 @@
             <div class="search-popup__overlay search-toggler"></div>
             <!-- /.search-popup__overlay -->
             <div class="search-popup__content">
-                <form role="search" method="get" class="search-popup__form" action="#">
-                    <input type="text" id="search" placeholder="Search Here..." />
+                <form role="search" method="get" class="search-popup__form" action="{{ route('global.search.page') }}">
+                    <input type="text" id="globalSearchInput" name="query" placeholder="Search services, team, blogs, albums..." autocomplete="off" />
                     <button type="submit" aria-label="search submit" class="tolak-btn">
                         <b><i class="icon-magnifying-glass"></i></b><span></span>
                     </button>
                 </form>
+                <ul id="globalSearchResults" class="search-popup__results"></ul>
             </div>
             <!-- /.search-popup__content -->
         </div>
@@ -388,6 +389,32 @@
             <span class="scroll-to-top__wrapper"><span class="scroll-to-top__inner"></span></span>
         </a>
 
+        <div id="siteAiAssistant" class="site-ai-assistant">
+            <button type="button" id="aiAssistantToggle" class="site-ai-assistant__toggle" aria-label="Open AI assistant">
+                <span class="site-ai-assistant__toggle-ring"></span>
+                <i class="bx bxs-bot"></i>
+            </button>
+
+            <div id="aiAssistantPanel" class="site-ai-assistant__panel">
+                <div class="site-ai-assistant__header">
+                    <strong>InfyraSoft AI Assistant</strong>
+                    <span class="site-ai-assistant__status">Online</span>
+                    <button type="button" id="aiAssistantClose" aria-label="Close assistant">&times;</button>
+                </div>
+
+                <div id="aiAssistantMessages" class="site-ai-assistant__messages">
+                    <div class="site-ai-assistant__message site-ai-assistant__message--bot">
+                        Hello! I am the {{ $setting->company_name ?? 'website' }} assistant. I can answer questions about our services, team members, news/blogs, albums, contact, and career.
+                    </div>
+                </div>
+
+                <form id="aiAssistantForm" class="site-ai-assistant__form">
+                    <input type="text" id="aiAssistantInput" placeholder="Ask anything about our website..." autocomplete="off" maxlength="1000">
+                    <button type="submit">Send</button>
+                </form>
+            </div>
+        </div>
+
 
         <script src="{{ asset('frontend') }}/assets/vendors/jquery/jquery-3.7.0.min.js"></script>
 
@@ -423,6 +450,482 @@
         <script src="{{ asset('frontend') }}/assets/js/tolak.js"></script>
         <!--<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>-->
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+        <script>
+            (function () {
+                const input = document.getElementById('globalSearchInput');
+                const resultsBox = document.getElementById('globalSearchResults');
+                const form = input ? input.closest('form') : null;
+                let timer = null;
+
+                if (!input || !resultsBox || !form) {
+                    return;
+                }
+
+                function escapeHtml(value) {
+                    return String(value)
+                        .replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;')
+                        .replace(/\"/g, '&quot;')
+                        .replace(/'/g, '&#039;');
+                }
+
+                function clearResults() {
+                    resultsBox.innerHTML = '';
+                    resultsBox.style.display = 'none';
+                }
+
+                function renderResults(items) {
+                    if (!Array.isArray(items) || items.length === 0) {
+                        resultsBox.innerHTML = '<li class="search-popup__result-item search-popup__result-empty">No results found</li>';
+                        resultsBox.style.display = 'block';
+                        return;
+                    }
+
+                    const html = items.map(function (item) {
+                        const group = escapeHtml(item.group || 'Result');
+                        const title = escapeHtml(item.title || 'Untitled');
+                        const subtitle = escapeHtml(item.subtitle || '');
+                        const url = escapeHtml(item.url || '#');
+
+                        return '<li class="search-popup__result-item">' +
+                            '<a href="' + url + '" class="search-popup__result-link">' +
+                            '<small class="search-popup__result-group">' + group + '</small>' +
+                            '<strong class="search-popup__result-title">' + title + '</strong>' +
+                            '<span class="search-popup__result-subtitle">' + subtitle + '</span>' +
+                            '</a>' +
+                            '</li>';
+                    }).join('');
+
+                    resultsBox.innerHTML = html;
+                    resultsBox.style.display = 'block';
+                }
+
+                input.addEventListener('keyup', function () {
+                    const query = input.value.trim();
+
+                    if (query.length < 2) {
+                        clearResults();
+                        return;
+                    }
+
+                    clearTimeout(timer);
+                    timer = setTimeout(function () {
+                        fetch("{{ route('global.search.suggestions') }}?query=" + encodeURIComponent(query))
+                            .then(function (response) { return response.json(); })
+                            .then(function (data) { renderResults(data); })
+                            .catch(function () {
+                                resultsBox.innerHTML = '<li class="search-popup__result-item search-popup__result-empty">Search failed. Try again.</li>';
+                                resultsBox.style.display = 'block';
+                            });
+                    }, 250);
+                });
+
+                form.addEventListener('submit', function (event) {
+                    if (input.value.trim().length < 2) {
+                        event.preventDefault();
+                        input.focus();
+                    }
+                });
+
+                document.addEventListener('click', function (event) {
+                    if (!resultsBox.contains(event.target) && event.target !== input) {
+                        clearResults();
+                    }
+                });
+            })();
+
+            (function () {
+                const toggle = document.getElementById('aiAssistantToggle');
+                const closeBtn = document.getElementById('aiAssistantClose');
+                const panel = document.getElementById('aiAssistantPanel');
+                const form = document.getElementById('aiAssistantForm');
+                const input = document.getElementById('aiAssistantInput');
+                const messages = document.getElementById('aiAssistantMessages');
+                const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                const history = [];
+
+                if (!toggle || !closeBtn || !panel || !form || !input || !messages) {
+                    return;
+                }
+
+                function appendMessage(text, type) {
+                    const item = document.createElement('div');
+                    item.className = 'site-ai-assistant__message ' + (type === 'user'
+                        ? 'site-ai-assistant__message--user'
+                        : 'site-ai-assistant__message--bot');
+                    item.textContent = text;
+                    messages.appendChild(item);
+                    messages.scrollTop = messages.scrollHeight;
+                    return item;
+                }
+
+                function setOpen(isOpen) {
+                    if (isOpen) {
+                        panel.classList.add('is-open');
+                        setTimeout(function () { input.focus(); }, 40);
+                    } else {
+                        panel.classList.remove('is-open');
+                    }
+                }
+
+                toggle.addEventListener('click', function () {
+                    setOpen(!panel.classList.contains('is-open'));
+                });
+
+                closeBtn.addEventListener('click', function () {
+                    setOpen(false);
+                });
+
+                form.addEventListener('submit', function (event) {
+                    event.preventDefault();
+                    const message = input.value.trim();
+                    if (message.length < 2) {
+                        input.focus();
+                        return;
+                    }
+
+                    appendMessage(message, 'user');
+                    history.push({ role: 'user', content: message });
+                    if (history.length > 10) {
+                        history.shift();
+                    }
+                    input.value = '';
+
+                    const loading = appendMessage('Thinking...', 'bot');
+
+                    fetch("{{ route('assistant.ask') }}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': csrf || ''
+                        },
+                        body: JSON.stringify({
+                            message: message,
+                            history: history
+                        })
+                    })
+                        .then(function (response) {
+                            return response.json().then(function (data) {
+                                return {
+                                    ok: response.ok,
+                                    status: response.status,
+                                    data: data
+                                };
+                            });
+                        })
+                        .then(function (result) {
+                            const data = result.data || {};
+
+                            if (!result.ok) {
+                                const firstErrorKey = data.errors ? Object.keys(data.errors)[0] : null;
+                                const validationError = (firstErrorKey && Array.isArray(data.errors[firstErrorKey]) && data.errors[firstErrorKey][0])
+                                    ? data.errors[firstErrorKey][0]
+                                    : (data.message || null);
+                                loading.textContent = validationError
+                                    ? validationError
+                                    : 'Sorry, I could not process your question. Please try again.';
+                                return;
+                            }
+
+                            loading.textContent = (data && data.answer)
+                                ? data.answer
+                                : 'Sorry, I could not find an answer right now.';
+                            history.push({ role: 'assistant', content: loading.textContent });
+                            if (history.length > 10) {
+                                history.shift();
+                            }
+                        })
+                        .catch(function () {
+                            loading.textContent = 'Sorry, something went wrong. Please try again.';
+                        });
+                });
+            })();
+        </script>
+
+        <style>
+            .search-popup__content {
+                position: relative;
+            }
+
+            .search-popup__results {
+                list-style: none;
+                margin: 12px 0 0;
+                padding: 0;
+                max-height: 360px;
+                overflow-y: auto;
+                background: #fff;
+                border-radius: 12px;
+                display: none;
+            }
+
+            .search-popup__result-item {
+                border-bottom: 1px solid #f2f2f2;
+            }
+
+            .search-popup__result-item:last-child {
+                border-bottom: 0;
+            }
+
+            .search-popup__result-link {
+                display: block;
+                padding: 12px 14px;
+                text-decoration: none;
+            }
+
+            .search-popup__result-group {
+                display: block;
+                color: #f07b29;
+                font-weight: 600;
+                line-height: 1.2;
+            }
+
+            .search-popup__result-title {
+                display: block;
+                color: #2f2f2f;
+                line-height: 1.3;
+                margin-top: 2px;
+            }
+
+            .search-popup__result-subtitle {
+                display: block;
+                color: #71706e;
+                font-size: 13px;
+                line-height: 1.3;
+                margin-top: 2px;
+            }
+
+            .search-popup__result-empty {
+                padding: 12px 14px;
+                color: #71706e;
+            }
+
+            .site-ai-assistant {
+                position: fixed;
+                right: 22px;
+                bottom: 18px;
+                z-index: 9999;
+            }
+
+            .scroll-to-top {
+                right: 22px !important;
+                bottom: 92px !important;
+                z-index: 9998 !important;
+            }
+
+            .scroll-to-top {
+                right: 0px !important;
+                bottom: 128px !important;
+                z-index: 9998 !important;
+            }
+
+            .site-ai-assistant__toggle {
+                width: 58px;
+                height: 58px;
+                border: 0;
+                border-radius: 50%;
+                position: relative;
+                background: linear-gradient(135deg, #f07b29 0%, #ff9a56 100%);
+                color: #fff;
+                font-size: 26px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 10px 30px rgba(240, 123, 41, 0.35);
+                transition: transform 0.25s ease, box-shadow 0.25s ease;
+                animation: aiPulse 2.4s infinite;
+            }
+
+            .site-ai-assistant__toggle:hover {
+                transform: translateY(-2px) scale(1.03);
+                box-shadow: 0 14px 34px rgba(240, 123, 41, 0.42);
+            }
+
+            .site-ai-assistant__toggle-ring {
+                position: absolute;
+                inset: -4px;
+                border-radius: 50%;
+                border: 1px solid rgba(240, 123, 41, 0.45);
+                pointer-events: none;
+            }
+
+            .site-ai-assistant__panel {
+                position: absolute;
+                right: 0;
+                bottom: 70px;
+                width: 360px;
+                max-width: calc(100vw - 24px);
+                max-height: min(70vh, 560px);
+                background: #fff;
+                border: 1px solid #e9e9e9;
+                border-radius: 14px;
+                box-shadow: 0 20px 45px rgba(0, 0, 0, 0.15);
+                overflow: hidden;
+                display: block;
+                opacity: 0;
+                visibility: hidden;
+                pointer-events: none;
+                transform: translateY(14px) scale(0.96);
+                transform-origin: bottom right;
+                transition: opacity 0.24s ease, transform 0.24s ease, visibility 0.24s ease;
+            }
+
+            .site-ai-assistant__panel.is-open {
+                opacity: 1;
+                visibility: visible;
+                pointer-events: auto;
+                transform: translateY(0) scale(1);
+            }
+
+            .site-ai-assistant__header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 12px 14px;
+                color: #fff;
+                background: linear-gradient(135deg, #71706e 0%, #5e5d5b 100%);
+                gap: 10px;
+            }
+
+            .site-ai-assistant__header strong {
+                font-size: 14px;
+                font-weight: 700;
+                letter-spacing: 0.01em;
+                margin-right: auto;
+            }
+
+            .site-ai-assistant__status {
+                font-size: 11px;
+                font-weight: 600;
+                padding: 3px 8px;
+                border-radius: 999px;
+                background: rgba(255, 255, 255, 0.17);
+                color: #fff;
+            }
+
+            .site-ai-assistant__header button {
+                border: 0;
+                background: transparent;
+                color: #fff;
+                font-size: 24px;
+                line-height: 1;
+                opacity: 0.9;
+            }
+
+            .site-ai-assistant__messages {
+                max-height: min(42vh, 340px);
+                overflow-y: auto;
+                padding: 12px;
+                background: #fcfcfc;
+            }
+
+            .site-ai-assistant__message {
+                margin-bottom: 10px;
+                padding: 10px 12px;
+                border-radius: 10px;
+                white-space: pre-wrap;
+                line-height: 1.45;
+                font-size: 14px;
+                animation: aiMessageIn 0.2s ease;
+            }
+
+            .site-ai-assistant__message--bot {
+                background: #f5f5f5;
+                color: #2f2f2f;
+                margin-right: 22px;
+            }
+
+            .site-ai-assistant__message--user {
+                background: #f07b29;
+                color: #fff;
+                margin-left: 22px;
+            }
+
+            .site-ai-assistant__form {
+                display: flex;
+                border-top: 1px solid #ededed;
+                padding: 10px;
+                gap: 8px;
+                background: #fff;
+            }
+
+            .site-ai-assistant__form input {
+                flex: 1;
+                border: 1px solid #dcdcdc;
+                border-radius: 8px;
+                padding: 10px;
+                font-size: 14px;
+            }
+
+            .site-ai-assistant__form button {
+                border: 0;
+                border-radius: 8px;
+                padding: 0 14px;
+                background: #f07b29;
+                color: #fff;
+                font-weight: 600;
+                transition: background-color 0.2s ease, transform 0.2s ease;
+            }
+
+            .site-ai-assistant__form button:hover {
+                background: #d96a20;
+                transform: translateY(-1px);
+            }
+
+            @keyframes aiPulse {
+                0% { box-shadow: 0 10px 30px rgba(240, 123, 41, 0.35); }
+                50% { box-shadow: 0 12px 36px rgba(240, 123, 41, 0.52); }
+                100% { box-shadow: 0 10px 30px rgba(240, 123, 41, 0.35); }
+            }
+
+            @keyframes aiMessageIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(4px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            @media (max-width: 575.98px) {
+                .site-ai-assistant {
+                    right: 12px;
+                    bottom: 12px;
+                }
+
+                .scroll-to-top {
+                    right: 12px !important;
+                    bottom: 78px !important;
+                }
+
+                .scroll-to-top {
+                    right: 12px !important;
+                    bottom: 78px !important;
+                }
+
+                .site-ai-assistant__toggle {
+                    width: 52px;
+                    height: 52px;
+                    font-size: 23px;
+                    color: #fff;
+                }
+
+                .site-ai-assistant__panel {
+                    width: calc(100vw - 24px);
+                    right: 0;
+                    bottom: 64px;
+                    max-height: 68vh;
+                }
+
+                .site-ai-assistant__messages {
+                    max-height: 40vh;
+                }
+            }
+        </style>
 
 
          @stack('scripts')

@@ -7,7 +7,7 @@
    <div class="hero-bg">
         @foreach($allCoverImages as $coverImage)
             @if ($coverImage->page_name == 'explore_qBit_tech')
-                <img src="{{ asset('storage/' . $coverImage->cover_image) }}" alt="Contact Qbit Tech">
+                <img src="{{ asset('storage/' . $coverImage->cover_image) }}" alt="Contact InfyraSoft">
             @endif
         @endforeach
    </div>
@@ -15,13 +15,13 @@
        <div class="hero-page-title">
           <span class="hero-sub-title">Know About Us</span>
             <h1 class="page-header__title">
-            Roots of QBit Tech
+            Roots of InfyraSoft
             </h1>
       </div>
       <nav aria-label="breadcrumb">
          <ol class="breadcrumb mb-0">
             <li class="breadcrumb-item"><a href="{{ route('home.page') }}">Home</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Explore QBit Tech</li>
+            <li class="breadcrumb-item active" aria-current="page">Explore InfyraSoft</li>
          </ol>
       </nav>
    </div>
@@ -39,10 +39,10 @@
 
    <div class="container">
       <div class="page-header__content">
-         <h2 class="page-header__title">Roots of QBit Tech</h2>
+         <h2 class="page-header__title">Roots of InfyraSoft</h2>
          <ul class="tolak-breadcrumb list-unstyled">
             <li><a href="{{ route('home.page') }}">Home</a></li>
-            <li><span>Explore QBit Tech</span></li>
+            <li><span>Explore InfyraSoft</span></li>
          </ul>
       </div>
    </div>

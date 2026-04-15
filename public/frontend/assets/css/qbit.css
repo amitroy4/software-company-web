@@ -23,18 +23,18 @@
   --tolak-text2-rgb: 159, 160, 160;
   --tolak-text-dark: #b7b7b7;
   --tolak-text-dark-rgb: 183, 183, 183;
-  --tolak-base: #f7891e;
-  --tolak-base-rgb: 247, 137, 30;
-    --tolak-primary: #0C87F1;
-    --tolak-primary-rgb: 12, 135, 241;
+  --tolak-base: #f07b29;
+  --tolak-base-rgb: 240, 123, 41;
+    --tolak-primary: #71706e;
+    --tolak-primary-rgb: 113, 112, 110;
   --tolak-gray: #ecf2fc;
   --tolak-gray-rgb: 236, 242, 252;
   --tolak-gray2: #c1c1c1;
   --tolak-gray2-rgb: 193, 193, 193;
   --tolak-white: #fff;
   --tolak-white-rgb: 255, 255, 255;
-  --tolak-black: #051d1f;
-  --tolak-black-rgb: 5, 29, 31;
+  --tolak-black: #71706e;
+  --tolak-black-rgb: 113, 112, 110;
   --tolak-black2: #222222;
   --tolak-black2-rgb: 34, 34, 34;
   --tolak-black3: #000;
@@ -1595,7 +1595,7 @@ border-radius: 20px;
 /*padding: 40px 0 35px;*/
 }
 .team-details-image{
-    
+
 }
 .team-details-image img{
 width: 100%;
@@ -10657,7 +10657,7 @@ width: 50px;
 }
 
 /*--------------------------------------------------------------
-# Skill 
+# Skill
 --------------------------------------------------------------*/
 .skill-one {
   position: relative;
@@ -23726,7 +23726,7 @@ font-size: 35px;
   align-items: center;
   transition: all 400ms ease;
   transform: scale(1);
-  background: var(--tolak-primary);
+  background: var(--tolak-base, #f07b29);
   padding: 10px;
   border-radius: 10px;
   height: 50px;
@@ -23735,14 +23735,14 @@ font-size: 35px;
 }
 .cta-eleven__box__title {
 font-size: 15px;
-  color: var(--tolak-border-color-rgb);
+  color: #f07b29;
   font-weight: 500;
   margin-left: 60px;
   margin-bottom: 1px;
   margin-top: 3px;
 }
 .cta-eleven__box__text {
-color: var(--tolak-primary);
+color: #f07b29;
   font-weight: 600;
   font-size: 18px;
 margin: 0 0 0 60px;
@@ -24284,7 +24284,7 @@ position: absolute;
 .blog-card-five__rm:hover {
   background-color: var(--tolak-base, #3d72fc);
   color: var(--tolak-white, #fff);
-  
+
 }
 .blog-card-five__rm:hover span {
   animation: iconTranslateX 0.4s forwards;
@@ -25776,12 +25776,53 @@ text-transform: uppercase;
 /*CUSTOM CSS*/
 
 /*TREE View Member CSS*/
+
+/* Brand icon palette override */
+i[class^="icon-"],
+i[class*=" icon-"],
+i[class^="icofont-"],
+i[class*=" icofont-"],
+i[class^="fa"],
+i[class*=" fa"],
+i[class^="bx"],
+i[class*=" bx"],
+[class*="__icon"] i,
+[class*="__icon"] span,
+.topbar-one__info__icon,
+.contact-one__info__icon,
+.contact-two__info__box__icon,
+.mail-section-two__content__icon {
+  color: #f07b29 !important;
+}
+
+/* Icons turn white on hover/focus interaction */
+a:hover i,
+a:focus i,
+button:hover i,
+button:focus i,
+[class*="__icon"]:hover i,
+[class*="__icon"]:hover span,
+.footer-widget__social a:hover i,
+.topbar-one__info li:hover .topbar-one__info__icon,
+.contact-one__info__item:hover .contact-one__info__icon,
+.contact-two__info__box:hover .contact-two__info__box__icon,
+.mail-section-two:hover .mail-section-two__content__icon {
+  color: #ffffff !important;
+}
+
+/* Keep neutral readability with the gray pair color */
+.main-menu__list > li > a,
+.sidebar__posts__meta,
+.footer-widget__info a,
+.footer-widget__links a {
+  color: #71706e;
+}
 .tree{
     overflow: hidden;
 }
 .tree ul {
     padding-top: 20px; position: relative;
-	
+
 	transition: all 0.5s;
 	-webkit-transition: all 0.5s;
 	-moz-transition: all 0.5s;
@@ -25792,7 +25833,7 @@ text-transform: uppercase;
 	list-style-type: none;
 	position: relative;
 	padding: 20px 5px 0 5px;
-	
+
 	transition: all 0.5s;
 	-webkit-transition: all 0.5s;
 	-moz-transition: all 0.5s;
@@ -25811,7 +25852,7 @@ text-transform: uppercase;
 	border-left: 1px solid #ccc;
 }
 
-/*We need to remove left-right connectors from elements without 
+/*We need to remove left-right connectors from elements without
 any siblings*/
 .tree li:only-child::after, .tree li:only-child::before {
 	display: none;
@@ -25820,7 +25861,7 @@ any siblings*/
 /*Remove space from the top of single children*/
 .tree li:only-child{ padding-top: 0;}
 
-/*Remove left connector from first child and 
+/*Remove left connector from first child and
 right connector from last child*/
 .tree li:first-child::before, .tree li:last-child::after{
 	border: 0 none;
@@ -25854,11 +25895,11 @@ right connector from last child*/
 	font-family: arial, verdana, tahoma;
 	font-size: 11px;
 	display: inline-block;
-	
+
 	border-radius: 5px;
 	-webkit-border-radius: 5px;
 	-moz-border-radius: 5px;
-	
+
 	transition: all 0.5s;
 	-webkit-transition: all 0.5s;
 	-moz-transition: all 0.5s;
@@ -25870,9 +25911,9 @@ right connector from last child*/
 	background: #c8e4f8; color: #000; border: 1px solid #94a0b4;
 }
 /*Connector styles on hover*/
-.tree li a:hover+ul li::after, 
-.tree li a:hover+ul li::before, 
-.tree li a:hover+ul::before, 
+.tree li a:hover+ul li::after,
+.tree li a:hover+ul li::before,
+.tree li a:hover+ul::before,
 .tree li a:hover+ul ul::before{
 	border-color:  #94a0b4;
 }

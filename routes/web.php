@@ -50,6 +50,10 @@ Route::controller(FrontendController::class)->group(function () {
     Route::get('/gallery', 'gallery')->name('gallery.page');
     Route::get('/gallery/{number}', 'images')->name('gallery.all');
 
+    Route::get('/search', 'globalSearchPage')->name('global.search.page');
+    Route::get('/search/suggestions', 'globalSearchSuggestions')->name('global.search.suggestions');
+    Route::post('/assistant/ask', 'askAssistant')->name('assistant.ask');
+
     Route::get('/blogs/search', 'searchBlogs')->name('blogs.search');
     Route::post('/contact-messege/send', 'sendContactMessage')->name('contactmessage.send');
 

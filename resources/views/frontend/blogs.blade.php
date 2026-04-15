@@ -5,7 +5,7 @@
         <div class="hero-bg">
             @foreach ($allCoverImages as $coverImage)
                 @if ($coverImage->page_name == 'news')
-                    <img src="{{ asset('storage/' . $coverImage->cover_image) }}" alt="Contact Qbit Tech">
+                    <img src="{{ asset('storage/' . $coverImage->cover_image) }}" alt="Contact InfyraSoft" loading="eager" fetchpriority="high" decoding="async">
                 @endif
             @endforeach
         </div>
@@ -37,9 +37,9 @@
                             style="visibility: visible; animation-duration: 1500ms; animation-delay: 0ms; animation-name: fadeInUp;">
                             <div class="blog-card__image">
                                 <img src="{{ asset($blog->image ?? 'frontend/assets/images/ui.jpg') }}"
-                                    alt="{{ $blog->title ?? '' }}" style="width: 350px; height: 262px; object-fit: cover;">
+                                    alt="{{ $blog->title ?? '' }}" style="width: 350px; height: 262px; object-fit: cover;" loading="lazy" decoding="async">
                                 <img src="{{ asset($blog->image ?? 'frontend/assets/images/ui.jpg') }}"
-                                    alt="{{ $blog->title ?? '' }}" style="width: 350px; height: 262px; object-fit: cover;">
+                                    alt="{{ $blog->title ?? '' }}" style="width: 350px; height: 262px; object-fit: cover;" loading="lazy" decoding="async">
                                 <a href="{{ route('blog.details', $blog->slug) }}" class="blog-card__image__link">
                                     <span class="sr-only">{{ \Illuminate\Support\Str::limit($blog->title ?? '', 45) }}</span>
                                 </a>
@@ -49,7 +49,7 @@
                                 <div class="blog-card-two__meta__author">
                                     <img src="{{ asset($blog->author_image ?? 'frontend/assets/images/award-1.jpg') }}"
                                         alt="{{ $blog->author ?? 'Admin' }}"
-                                        style="width: 40px; height: 40px; object-fit: cover;">
+                                        style="width: 40px; height: 40px; object-fit: cover;" loading="lazy" decoding="async">
                                     {{ $blog->author ?? 'Admin' }}
                                 </div>
                                 <div class="d-flex align-items-center">
@@ -83,6 +83,9 @@
                     </div>
                 @endforelse
             </div>
+        </div>
+        <div class="mt-4 d-flex justify-content-center">
+            {{ $blogs->links() }}
         </div>
     </section>
 @endsection

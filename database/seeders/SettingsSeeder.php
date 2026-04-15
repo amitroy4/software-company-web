@@ -14,8 +14,8 @@ class SettingsSeeder extends Seeder
         Setting::truncate();
 
         Setting::create([
-            'company_name'         => 'QBit Tech',
-            'copyright_text'            => '© 2025 QBit Tech. All rights reserved.',
+            'company_name'         => 'InfyraSoft',
+            'copyright_text'            => '© 2025 InfyraSoft. All rights reserved.',
             'description'    => 'Leading technology solutions provider in Bangladesh.',
             'registration_number'  => '123456',
             'trade_license'        => '7891011',

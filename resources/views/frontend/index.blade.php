@@ -1,6 +1,9 @@
 @extends('layouts.frontend')
 @section('title', 'Home')
 @push('styles')
+    @if (!empty($sliders) && $sliders->isNotEmpty())
+        <link rel="preload" as="image" href="{{ asset('storage/' . $sliders->first()->image) }}" fetchpriority="high">
+    @endif
 <style>
     /* for testimonials */
     .testimonials-five__item__content {
@@ -359,8 +362,8 @@
             </div>
             @if ($sliderCounter)
                 <div class="main-slider-one__project wow fadeInUp" data-wow-delay="200ms">
-                    <div class="main-slider-one__project__icon"><img src="{{ asset('storage/' . $sliderCounter->counter_icon) }}"
-                            alt="Project Icon" style="width: 50px;" /></div>
+                            <div class="main-slider-one__project__icon"><img src="{{ asset('storage/' . $sliderCounter->counter_icon) }}"
+                            alt="Project Icon" style="width: 50px;" loading="eager" fetchpriority="high" decoding="async" /></div>
                     <h5 class="main-slider-one__project__number count-box"><span class="count-text"
                             data-stop="{{ $sliderCounter->data_count }}"
                             data-speed="1500"></span>{{ $sliderCounter->counter_symbol }}</h5>
@@ -379,7 +382,7 @@
                     <div class="col-lg-5 wow fadeInRight" data-wow-delay="00ms">
                         <div class="skill-one__image">
                             <div class="about-five__image__one wow fadeInUp" data-wow-delay="100ms">
-                                <img src="{{ asset('storage/' . $about->image) }}" alt="tolak">
+                                <img src="{{ asset('storage/' . $about->image) }}" alt="tolak" loading="eager" fetchpriority="high" decoding="async">
                             </div>
                             @if ($about->quote)
                                             <div class="skill-one__image__text wow fadeInUp" data-wow-delay="200ms">
@@ -872,7 +875,7 @@
                     <div class="col-lg-4 col-md-6 d-flex align-items-stretch">
                         <div class="solution-two__image w-100">
                             <img src="{{ asset('storage/' . $whyWorkImage->image) }}" alt="tolak" class="img-fluid h-100 w-100"
-                                style="object-fit: cover;">
+                                style="object-fit: cover;" loading="lazy" decoding="async">
                         </div>
                     </div>
                 @endif
@@ -918,7 +921,7 @@
                 <div class="col-6 col-sm-4 col-md-3 col-lg-2 d-flex justify-content-center">
                     <div class="why-choose-five__box text-center rounded shadow-sm w-100 h-100">
                         <div class="why-choose-five__box__icon mb-2">
-                            <img src="{{ asset('storage/' . $application->icon) }}" alt="{{ $application->title }}" class="img-fluid" style="max-height: 80px;">
+                            <img src="{{ asset('storage/' . $application->icon) }}" alt="{{ $application->title }}" class="img-fluid" style="max-height: 80px;" loading="lazy" decoding="async">
                         </div>
                         <h3 class="why-choose-five__box__title">
                             <a @if ($application->show_url == 1) href="{{ $application->url ?? 'javascript:void(0)' }}" @else href="javascript:void(0)" @endif>
@@ -1222,7 +1225,7 @@
                                 <div class="featurer-six__item__hover"
                                     style="background-image: url(assets/images/resources/feature-6-1.jpg);"></div>
                                 <div class="cta-eleven__image">
-                                    <img src="{{ asset('storage/' . $client->logo) }}" alt="{{ $client->name }}">
+                                    <img src="{{ asset('storage/' . $client->logo) }}" alt="{{ $client->name }}" loading="lazy" decoding="async">
                                 </div>
                                 <div class="client-name-overlay">
                                     <span>{{ $client->name }}</span>
@@ -1281,7 +1284,7 @@
                             <div class="testimonials-five__item wow fadeInUp" data-wow-delay="100ms">
                                 <div class="testimonials-five__item__image">
                                     <img src="{{ $testimonial->image ? asset('storage/' . $testimonial->image) : asset('/frontend/assets/images/no_user.png') }}"
-                                        alt="tolak">
+                                        alt="tolak" loading="lazy" decoding="async">
                                 </div>
                                 <div class="testimonials-five__item__content">{{ $testimonial->review }}</div>
                                 <!-- /.testimonials-five__item__content -->
@@ -1323,9 +1326,9 @@
                         <div class="blog-card wow fadeInUp" data-wow-duration='1500ms' data-wow-delay='00ms'>
                             <div class="blog-card__image">
                                 <img src="{{ asset($blog->image ?? 'frontend/assets/images/ui.jpg') }}" alt="{{ $blog->title }}"
-                                    style="width: 350px; height: 262px; object-fit: cover;">
+                                    style="width: 350px; height: 262px; object-fit: cover;" loading="lazy" decoding="async">
                                 <img src="{{ asset($blog->image ?? 'frontend/assets/images/ui.jpg') }}" alt="{{ $blog->title }}"
-                                    style="width: 350px; height: 262px; object-fit: cover;">
+                                    style="width: 350px; height: 262px; object-fit: cover;" loading="lazy" decoding="async">
                                 <a href="{{ route('blog.details', $blog->slug) }}" class="blog-card__image__link"></a>
                             </div>
                             <div class="blog-card__bg"></div>
@@ -1333,7 +1336,7 @@
                                 <div class="blog-card-two__meta__author">
                                     <img src="{{ asset($blog->author_image ?? 'frontend/assets/images/award-1.jpg') }}"
                                         alt="{{ $blog->author ?? 'Admin' }}"
-                                        style="width: 40px; height: 40px; object-fit: cover;">
+                                        style="width: 40px; height: 40px; object-fit: cover;" loading="lazy" decoding="async">
                                     {{ $blog->author ?? 'Admin' }}
                                 </div>
                                 <div class="d-flex align-items-center">
