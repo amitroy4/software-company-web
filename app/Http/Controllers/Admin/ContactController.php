@@ -79,27 +79,37 @@ class ContactController extends Controller
 
     // ...................................contact messages ..........................................
 
-    // public function contactMessages(){
-    //     $messages = ContactMessage::all();
-    //     return view('admin.contact-message.index');
-    // }
+    public function contactMessages(){
+        return view('admin.contact-message.index', [
+            'activeFilter' => 'all',
+        ]);
+    }
 
     public function unreadContactMessages(){
-        // $messages = ContactMessage::all();
-        return view('admin.contact-message.index');
+        return view('admin.contact-message.index', [
+            'activeFilter' => 'unread',
+        ]);
     }
 
 
     public function readContactMessages(){
-        // $messages = ContactMessage::all();
-        return view('admin.contact-message.read-message');
+        return view('admin.contact-message.index', [
+            'activeFilter' => 'read',
+        ]);
     }
 
-    // unread messages api
+    // messages api with filter: all | unread | read
     public function apiMessages(){
-        return ContactMessage::where('status', true)->with('service')
-                ->orderBy('updated_at', 'desc')
-                ->get();
+        $filter = request()->query('filter', 'all');
+
+        $query = ContactMessage::query()->with('service');
+        if ($filter === 'read') {
+            $query->where('status', false);
+        } elseif ($filter === 'unread') {
+            $query->where('status', true);
+        }
+
+        return $query->orderBy('updated_at', 'desc')->get();
 
     }
 
@@ -110,6 +120,31 @@ class ContactController extends Controller
                 ->get();
     }
 
+    // open notification: mark unread message as read and go to read message list
+    public function openMessage($id)
+    {
+        $message = ContactMessage::findOrFail($id);
+
+        if ($message->status) {
+            $message->status = false;
+            $message->save();
+        }
+
+        return redirect()->route('contact.messages.show', $message->id);
+    }
+
+    public function showMessage($id)
+    {
+        $message = ContactMessage::with('service')->findOrFail($id);
+
+        if ($message->status) {
+            $message->status = false;
+            $message->save();
+        }
+
+        return view('admin.contact-message.show', compact('message'));
+    }
+
     // update status as read
     public function updateStatus(Request $request, $id)
     {
@@ -118,7 +153,13 @@ class ContactController extends Controller
         ]);
 
         $message = ContactMessage::findOrFail($id);
-        $message->status = $request->status;
+
+        // One-way transition only: unread(true) -> read(false)
+        if ($message->status === false && (bool) $request->status === true) {
+            return response()->json(['message' => 'Read messages cannot be marked unread.'], 422);
+        }
+
+        $message->status = (bool) $request->status;
         $message->save();
 
         return response()->json(['message' => 'Status updated successfully.']);

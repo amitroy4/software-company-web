@@ -68,11 +68,20 @@ class FrontendController extends Controller
     {
         $q = strtolower($query);
 
-        if (preg_match('/\b(hello|hi|hey|salam|assalam)\b/', $q)) {
+        if (preg_match('/\b(hello|hi|hey|salam|assalam|assalamu\s*alaikum|good\s*morning|good\s*afternoon|good\s*evening|good\s*night|gm|gn)\b/', $q)) {
             return 'greeting';
         }
         if (preg_match('/\b(contact|phone|email|address|location|call|hotline)\b/', $q)) {
             return 'contact';
+        }
+        if (preg_match('/\b(thank you|thanks|thx|appreciate)\b/', $q)) {
+            return 'thanks';
+        }
+        if (preg_match('/\b(how are you|how\'re you|how r you|are you there)\b/', $q)) {
+            return 'status';
+        }
+        if (preg_match('/\b(what can you do|help me|how can you help|capabilities|who are you)\b/', $q)) {
+            return 'capability';
         }
 
         if (
@@ -256,7 +265,7 @@ class FrontendController extends Controller
         }
 
         $uncertainPatterns = [
-            '/\b(i\s+do\s+not\s+know|i\s+don\'t\s+know|not\s+enough\s+information|need\s+more\s+information|cannot\s+answer|can\'t\s+answer|uncertain|not\s+sure)\b/',
+            '/\b(i\s+do\s+not\s+know|i\s+don\'t\s+know|not\s+enough\s+information|need\s+more\s+information|cannot\s+answer|can\'t\s+answer)\b/',
             '/\b(please\s+provide\s+more\s+details|ask\s+more\s+specific|i\s+could\s+not\s+find\s+an\s+exact\s+match)\b/',
         ];
 
@@ -272,7 +281,7 @@ class FrontendController extends Controller
     private function buildLiveSearchFallbackAnswer(string $query, array $results): string
     {
         $lines = [];
-        $lines[] = "I could not answer directly, so I searched the website for: \"{$query}\".";
+        $lines[] = "Here are the closest matches I found for \"{$query}\".";
 
         $groupTitles = [
             'services' => 'Services',
@@ -306,6 +315,31 @@ class FrontendController extends Controller
             if ($groupLines !== '') {
                 $lines[] = $title . ":\n{$groupLines}";
             }
+        }
+
+        $topMatches = collect($results)
+            ->flatten(1)
+            ->take(3)
+            ->map(function ($item) {
+                $title = $item['title'] ?? 'Item';
+                $subtitle = trim((string) ($item['subtitle'] ?? ''));
+                $url = $item['url'] ?? null;
+
+                $line = '- ' . $title;
+                if ($subtitle !== '') {
+                    $line .= ' :: ' . $subtitle;
+                }
+                if (!empty($url)) {
+                    $line .= ' (' . $url . ')';
+                }
+
+                return $line;
+            })
+            ->values()
+            ->all();
+
+        if (!empty($topMatches)) {
+            $lines[] = "A few quick links:\n" . implode("\n", $topMatches);
         }
 
         if (count($lines) === 1) {
@@ -677,6 +711,19 @@ class FrontendController extends Controller
             return implode("\n", $lines);
         }
 
+        if ($intent === 'thanks') {
+            return 'You are very welcome. If you want, I can help you with services, pricing direction, portfolio examples, or the fastest way to contact our team.';
+        }
+
+        if ($intent === 'status') {
+            return 'I am doing great, thanks for asking. I am here and ready to help. What would you like to know?';
+        }
+
+        if ($intent === 'capability') {
+            $companyName = $context['company']['name'] ?? 'our company';
+            return "I am the {$companyName} assistant. I can help with services, team details, products, blogs, gallery, careers, and contact information. I can also answer general questions and guide you to the right page quickly.";
+        }
+
         if ($intent === 'about') {
             $about = $context['about'][0] ?? null;
             if (!$about) {
@@ -738,7 +785,7 @@ class FrontendController extends Controller
     private function buildFallbackAssistantAnswer(string $query, array $context): string
     {
         $lines = [];
-        $lines[] = "I searched the website knowledge base for: \"{$query}\".";
+        $lines[] = "Here is what I found related to \"{$query}\".";
 
         if (!empty($context['services'])) {
             $serviceLines = collect($context['services'])->map(function ($item) {
@@ -884,11 +931,18 @@ class FrontendController extends Controller
             $companyName = $context['company']['name'] ?? 'our company';
             $contactPhone = $context['company']['phone'] ?? null;
             $contactEmail = $context['company']['email'] ?? null;
+            $intent = $this->detectAssistantIntent($query);
 
-            $lines[] = "I could not find an exact match in {$companyName} website data. Please ask a more specific question about services, team members, blogs/news, albums, contact, or career.";
+            if ($intent === 'members') {
+                $lines[] = "The quickest way to explore our team is here: " . route('powerhouse.team') . '.';
+                $lines[] = 'If you share a role (for example developer, designer, or manager), I can help you find the most relevant team members.';
+                return implode("\n\n", $lines);
+            }
+
+            $lines[] = "I could not find an exact match in {$companyName} website data, but I can still help. Try asking about a service, project, team member, blog, gallery item, career, or contact detail.";
 
             if ($contactPhone || $contactEmail) {
-                $lines[] = "You can also contact us directly" .
+                $lines[] = "If you'd like, I can also point you to the right contact option" .
                     ($contactPhone ? " by phone: {$contactPhone}" : '') .
                     ($contactEmail ? ($contactPhone ? ' or' : ' by') . " email: {$contactEmail}" : '') .
                     '.';
@@ -912,13 +966,27 @@ class FrontendController extends Controller
 
         if ($intent === 'greeting') {
             $companyName = Setting::value('company_name') ?: 'our company';
+
+            $greeting = 'Hello';
+            if (preg_match('/\bgood\s*morning\b|\bgm\b/i', $query)) {
+                $greeting = 'Good morning';
+            } elseif (preg_match('/\bgood\s*afternoon\b/i', $query)) {
+                $greeting = 'Good afternoon';
+            } elseif (preg_match('/\bgood\s*evening\b/i', $query)) {
+                $greeting = 'Good evening';
+            } elseif (preg_match('/\bgood\s*night\b|\bgn\b/i', $query)) {
+                $greeting = 'Good evening';
+            }
+
             return response()->json([
-                'answer' => "Hello! Welcome to {$companyName}. You can ask me about services, team members, blogs/news, image albums, products, careers, or contact information.",
+                'answer' => "{$greeting}! Welcome to {$companyName}. How can I help you today? I can assist with services, team information, projects, pricing, blogs, gallery, careers, or contact details.",
                 'source' => 'website-intent',
             ]);
         }
 
-        if ($intent === 'services') {
+        $isBroadServiceRequest = (bool) preg_match('/\b(all\s+services|service\s+list|list\s+services|our\s+services|what\s+services\s+do\s+you\s+offer)\b/i', $query);
+
+        if ($intent === 'services' && $isBroadServiceRequest) {
             $serviceNames = Service::query()
                 ->where('status', true)
                 ->orWhere('status', 1)
@@ -961,13 +1029,73 @@ class FrontendController extends Controller
             ]);
         }
 
+        if ($intent === 'members') {
+            $hasSpecificRole = (bool) preg_match('/\b(developer|engineer|designer|management|manager|lead|leadership|support|sales|marketing|hr|frontend|backend|full\s*stack|ui\s*\/\s*ux|ui|ux|qa|tester)\b/i', $query);
+            $members = Member::query()
+                ->where(function ($query) {
+                    $query->where('status', true)
+                        ->orWhere('status', 1);
+                })
+                ->orderBy('name')
+                ->take(8)
+                ->get(['name', 'designation', 'department']);
+
+            if (!$hasSpecificRole) {
+                return response()->json([
+                    'answer' => 'Sure — I can help with the team. Are you looking for management, developers, designers, or support? Reply with a role and I’ll point you to the most relevant people.',
+                    'source' => 'website-intent',
+                ]);
+            }
+
+            if ($members->isNotEmpty()) {
+                $lines = ["Sure. Here are some of our team members:"];
+                foreach ($members as $member) {
+                    $role = trim(($member->designation ?? '') . (!empty($member->department) ? ' - ' . $member->department : ''));
+                    $lines[] = '- ' . $member->name . ($role !== '' ? ' (' . $role . ')' : '');
+                }
+                $lines[] = '';
+                $lines[] = 'Full team page: ' . route('powerhouse.team');
+
+                return response()->json([
+                    'answer' => implode("\n", $lines),
+                    'source' => 'website-intent',
+                ]);
+            }
+
+            return response()->json([
+                'answer' => 'I can help with the team, but I need a little more detail. Are you looking for management, developers, designers, or support?',
+                'source' => 'website-intent',
+            ]);
+        }
+
         try {
             $context = $this->buildAssistantContext($query);
         } catch (\Throwable $exception) {
-            return response()->json([
-                'answer' => 'Here are our key services: ' . route('service') . '. You can also ask about team, blogs, gallery, products, careers, or contact info.',
-                'source' => 'website-fallback',
-            ]);
+            report($exception);
+            $setting = Setting::first();
+            $context = [
+                'company' => [
+                    'name' => optional($setting)->company_name ?? 'Our company',
+                    'phone' => optional($setting)->contact_number ?? null,
+                    'whatsapp' => optional($setting)->whatsapp_number ?? null,
+                    'email' => optional($setting)->email ?? null,
+                    'address' => optional($setting)->address ?? null,
+                    'website' => optional($setting)->website ?? null,
+                ],
+                'about' => [],
+                'services' => [],
+                'faqs' => [],
+                'blogs' => [],
+                'members' => [],
+                'albums' => [],
+                'products' => [],
+                'careers' => [],
+                'contacts' => [],
+                'clients' => [],
+                'testimonials' => [],
+                'why_work' => [],
+                'counters' => [],
+            ];
         }
 
         $history = collect($validated['history'] ?? [])
@@ -993,7 +1121,7 @@ class FrontendController extends Controller
                 $messages = [
                     [
                         'role' => 'system',
-                        'content' => 'You are a website customer support assistant. Answer from provided website context and recent conversation only. Be accurate, practical, and concise. If uncertain, say you do not have enough website data and provide the best relevant page link from context.',
+                        'content' => 'You are a realistic, professional customer support assistant for a company website. Sound natural, warm, and confident like a real human support agent. Prefer direct answers over generic lists. Use the website context when the question is about the company, but if the question is general, answer normally and helpfully. Ask one short clarifying question only when the user intent is ambiguous. If details are missing, say so briefly and offer the closest useful next step.',
                     ],
                 ];
 
@@ -1006,7 +1134,7 @@ class FrontendController extends Controller
 
                 $messages[] = [
                     'role' => 'user',
-                    'content' => "Question: {$query}\n\nWebsite knowledge:\n{$knowledgeText}\n\nAnswer using only the website knowledge above. If the user asks about a service, give the service name and the closest service details. If the exact answer is not present, give the closest helpful website-based answer and include a useful page link.",
+                    'content' => "Question: {$query}\n\nWebsite knowledge:\n{$knowledgeText}\n\nAnswer in a natural chat style. Keep it specific and helpful, and avoid sending the user a generic website-services list unless they ask for it. If the question is about this company or its website, use the website knowledge above and include the most relevant page link. If the question is general, answer from your general knowledge in a clear, helpful way.",
                 ];
 
                 $response = Http::withToken($apiKey)
@@ -1041,7 +1169,12 @@ class FrontendController extends Controller
             }
         }
 
-        $searchResults = $this->getGlobalSearchResults($query, 5);
+        try {
+            $searchResults = $this->getGlobalSearchResults($query, 5);
+        } catch (\Throwable $exception) {
+            report($exception);
+            $searchResults = [];
+        }
         if (!empty($searchResults['services']) || !empty($searchResults['members']) || !empty($searchResults['blogs']) || !empty($searchResults['albums']) || !empty($searchResults['sections'])) {
             return response()->json([
                 'answer' => $this->buildLiveSearchFallbackAnswer($query, $searchResults),

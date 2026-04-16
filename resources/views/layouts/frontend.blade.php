@@ -390,26 +390,47 @@
         </a>
 
         <div id="siteAiAssistant" class="site-ai-assistant">
-            <button type="button" id="aiAssistantToggle" class="site-ai-assistant__toggle" aria-label="Open AI assistant">
+            <button type="button" id="aiAssistantToggle" class="site-ai-assistant__toggle" aria-label="Open assistant">
                 <span class="site-ai-assistant__toggle-ring"></span>
                 <i class="bx bxs-bot"></i>
             </button>
 
             <div id="aiAssistantPanel" class="site-ai-assistant__panel">
                 <div class="site-ai-assistant__header">
-                    <strong>InfyraSoft AI Assistant</strong>
+                    <strong>Assistant</strong>
                     <span class="site-ai-assistant__status">Online</span>
                     <button type="button" id="aiAssistantClose" aria-label="Close assistant">&times;</button>
                 </div>
 
                 <div id="aiAssistantMessages" class="site-ai-assistant__messages">
                     <div class="site-ai-assistant__message site-ai-assistant__message--bot">
-                        Hello! I am the {{ $setting->company_name ?? 'website' }} assistant. I can answer questions about our services, team members, news/blogs, albums, contact, and career.
+                        Hello, and welcome. I am the {{ $setting->company_name ?? 'website' }} support assistant. Tell me what you need, and I will help you step by step.
+                    </div>
+                </div>
+
+                <div class="site-ai-assistant__suggestion-shell" id="aiAssistantSuggestions" aria-label="Suggested prompts">
+                    <button type="button" class="site-ai-assistant__suggestions-toggle" id="aiAssistantSuggestionsToggle" aria-expanded="false">
+                        Quick prompts
+                        <span class="site-ai-assistant__suggestions-toggle__badge">9</span>
+                        <i class="bx bx-chevron-down" aria-hidden="true"></i>
+                    </button>
+                    <div class="site-ai-assistant__suggestions-dropdown is-hidden" id="aiAssistantSuggestionsDropdown">
+                        <div class="site-ai-assistant__suggestions-grid">
+                            <button type="button" class="site-ai-assistant__suggestion" data-suggestion="team information">Team</button>
+                            <button type="button" class="site-ai-assistant__suggestion" data-suggestion="what services do you offer">Services</button>
+                            <button type="button" class="site-ai-assistant__suggestion" data-suggestion="send contact message">Contact</button>
+                            <button type="button" class="site-ai-assistant__suggestion" data-suggestion="how are you">Small talk</button>
+                            <button type="button" class="site-ai-assistant__suggestion" data-suggestion="tell me about your company">About us</button>
+                            <button type="button" class="site-ai-assistant__suggestion" data-suggestion="show me your gallery">Gallery</button>
+                            <button type="button" class="site-ai-assistant__suggestion" data-suggestion="latest blogs">Blogs</button>
+                            <button type="button" class="site-ai-assistant__suggestion" data-suggestion="career openings">Careers</button>
+                            <button type="button" class="site-ai-assistant__suggestion" data-suggestion="how can I contact you">Contact details</button>
+                        </div>
                     </div>
                 </div>
 
                 <form id="aiAssistantForm" class="site-ai-assistant__form">
-                    <input type="text" id="aiAssistantInput" placeholder="Ask anything about our website..." autocomplete="off" maxlength="1000">
+                    <input type="text" id="aiAssistantInput" placeholder="Ask me anything..." autocomplete="off" maxlength="1000">
                     <button type="submit">Send</button>
                 </form>
             </div>
@@ -545,9 +566,60 @@
                 const messages = document.getElementById('aiAssistantMessages');
                 const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
                 const history = [];
+                const suggestionsWrap = document.getElementById('aiAssistantSuggestions');
+                const suggestionsToggle = document.getElementById('aiAssistantSuggestionsToggle');
+                const suggestionsDropdown = document.getElementById('aiAssistantSuggestionsDropdown');
+                const suggestionsSeenKey = 'aiAssistantSuggestionsSeen';
+                let suggestionsSeen = false;
+                const contactFlow = {
+                    active: false,
+                    step: null,
+                    data: {
+                        name: '',
+                        email: '',
+                        subject: '',
+                        message: ''
+                    }
+                };
+                let contactReminderTimer = null;
 
                 if (!toggle || !closeBtn || !panel || !form || !input || !messages) {
                     return;
+                }
+
+                try {
+                    suggestionsSeen = window.sessionStorage.getItem(suggestionsSeenKey) === '1';
+                } catch (error) {
+                    suggestionsSeen = false;
+                }
+
+                function markSuggestionsSeen() {
+                    suggestionsSeen = true;
+                    try {
+                        window.sessionStorage.setItem(suggestionsSeenKey, '1');
+                    } catch (error) {
+                        // Ignore storage issues.
+                    }
+                }
+
+                function escapeHtml(value) {
+                    return String(value)
+                        .replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;')
+                        .replace(/\"/g, '&quot;')
+                        .replace(/'/g, '&#039;');
+                }
+
+                function formatAssistantMessage(text) {
+                    const escaped = escapeHtml(String(text || ''));
+                    const withLinks = escaped.replace(/(https?:\/\/[^\s<]+)/g, function (url) {
+                        const cleanUrl = url.replace(/[),.;!?]+$/, '');
+                        const trailing = url.slice(cleanUrl.length);
+                        return '<a href="' + cleanUrl + '" class="site-ai-assistant__link" target="_self" rel="noopener noreferrer">' + cleanUrl + '</a>' + trailing;
+                    });
+
+                    return withLinks.replace(/\n/g, '<br>');
                 }
 
                 function appendMessage(text, type) {
@@ -555,16 +627,241 @@
                     item.className = 'site-ai-assistant__message ' + (type === 'user'
                         ? 'site-ai-assistant__message--user'
                         : 'site-ai-assistant__message--bot');
-                    item.textContent = text;
+                    item.innerHTML = formatAssistantMessage(text);
                     messages.appendChild(item);
                     messages.scrollTop = messages.scrollHeight;
                     return item;
                 }
 
+                function setSuggestionsVisible(isVisible) {
+                    if (!suggestionsDropdown || !suggestionsToggle) {
+                        return;
+                    }
+
+                    suggestionsDropdown.classList.toggle('is-hidden', !isVisible);
+                    suggestionsToggle.setAttribute('aria-expanded', isVisible ? 'true' : 'false');
+                    suggestionsToggle.classList.toggle('is-active', isVisible);
+                }
+
+                function updateSuggestionsVisibility() {
+                    const shouldShow = !suggestionsSeen && input.value.trim().length === 0 && panel.classList.contains('is-open');
+                    setSuggestionsVisible(shouldShow);
+                }
+
+                function clearContactReminder() {
+                    if (contactReminderTimer) {
+                        clearTimeout(contactReminderTimer);
+                        contactReminderTimer = null;
+                    }
+                }
+
+                function getContactReminderText() {
+                    if (!contactFlow.active) {
+                        return '';
+                    }
+
+                    if (contactFlow.step === 'confirm_start') {
+                        return 'Still there? Please reply with yes or no if you want to contact us.';
+                    }
+                    if (contactFlow.step === 'name') {
+                        return 'Still there? Please share your full name.';
+                    }
+                    if (contactFlow.step === 'email') {
+                        return 'Still there? Please enter your email address.';
+                    }
+                    if (contactFlow.step === 'subject') {
+                        return 'Still there? Please enter the subject of your message.';
+                    }
+                    if (contactFlow.step === 'message') {
+                        return 'Still there? Please write the message/description you want to send.';
+                    }
+                    if (contactFlow.step === 'confirm_submit') {
+                        return 'Still there? Please confirm with yes or no to submit the contact message.';
+                    }
+
+                    return 'Still there? If you want, I can help you contact us. Reply with yes to continue or no to stop.';
+                }
+
+                function scheduleContactReminder() {
+                    clearContactReminder();
+
+                    if (!contactFlow.active) {
+                        return;
+                    }
+
+                    contactReminderTimer = setTimeout(function () {
+                        if (!contactFlow.active) {
+                            return;
+                        }
+
+                        const reminderText = getContactReminderText();
+                        if (reminderText) {
+                            appendMessage(reminderText, 'bot');
+                        }
+
+                        if (contactFlow.active) {
+                            scheduleContactReminder();
+                        }
+                    }, 10000);
+                }
+
+                function resetContactFlow() {
+                    clearContactReminder();
+                    contactFlow.active = false;
+                    contactFlow.step = null;
+                    contactFlow.data = {
+                        name: '',
+                        email: '',
+                        subject: '',
+                        message: ''
+                    };
+                }
+
+                function shouldStartContactFlow(text) {
+                    return /\b(send|submit)\b.*\b(contact|message|inquiry|enquiry)\b/i.test(text)
+                        || /\b(contact|message|inquiry|enquiry)\b.*\b(send|submit)\b/i.test(text)
+                        || /\b(contact\s*form|contact\s*message|quote\s*request)\b/i.test(text);
+                }
+
+                function isValidEmail(email) {
+                    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || '').trim());
+                }
+
+                function isYes(value) {
+                    return /^(yes|y|ok|okay|sure|confirm|go ahead|continue)$/i.test(String(value || '').trim());
+                }
+
+                function isNo(value) {
+                    return /^(no|n|not now|cancel|stop|exit)$/i.test(String(value || '').trim());
+                }
+
+                function processContactFlowMessage(text) {
+                    const value = String(text || '').trim();
+
+                    if (/^(cancel|stop|exit)$/i.test(value) && contactFlow.active) {
+                        resetContactFlow();
+                        return { type: 'reply', text: 'No problem. I canceled the contact form request. You can type "send contact message" anytime to start again.' };
+                    }
+
+                    if (!contactFlow.active) {
+                        contactFlow.active = true;
+                        contactFlow.step = 'confirm_start';
+                        scheduleContactReminder();
+                        return { type: 'reply', text: 'Sure. Do you want to contact us? Please reply with yes or no.' };
+                    }
+
+                    if (contactFlow.step === 'confirm_start') {
+                        if (isNo(value)) {
+                            resetContactFlow();
+                            return { type: 'reply', text: 'No problem. If you need later, just type "send contact message".' };
+                        }
+                        if (!isYes(value)) {
+                            return { type: 'reply', text: 'Please reply with yes or no.' };
+                        }
+                        contactFlow.step = 'name';
+                        scheduleContactReminder();
+                        return { type: 'reply', text: 'Great. Please share your full name.' };
+                    }
+
+                    if (contactFlow.step === 'name') {
+                        if (value.length < 2) {
+                            return { type: 'reply', text: 'Please enter a valid name (at least 2 characters).' };
+                        }
+                        contactFlow.data.name = value;
+                        contactFlow.step = 'email';
+                        scheduleContactReminder();
+                        return { type: 'reply', text: 'Great. Now please enter your email address.' };
+                    }
+
+                    if (contactFlow.step === 'email') {
+                        if (!isValidEmail(value)) {
+                            return { type: 'reply', text: 'That email looks invalid. Please provide a valid email address.' };
+                        }
+                        contactFlow.data.email = value;
+                        contactFlow.step = 'subject';
+                        scheduleContactReminder();
+                        return { type: 'reply', text: 'Thanks. What is the subject of your message?' };
+                    }
+
+                    if (contactFlow.step === 'subject') {
+                        if (value.length < 3) {
+                            return { type: 'reply', text: 'Please provide a short subject (at least 3 characters).' };
+                        }
+                        contactFlow.data.subject = value;
+                        contactFlow.step = 'message';
+                        scheduleContactReminder();
+                        return { type: 'reply', text: 'Perfect. Please write the message/description you want to send.' };
+                    }
+
+                    if (contactFlow.step === 'message') {
+                        if (value.length < 5) {
+                            return { type: 'reply', text: 'Please provide a bit more detail in your message (at least 5 characters).' };
+                        }
+                        contactFlow.data.message = value;
+
+                        contactFlow.step = 'confirm_submit';
+                        scheduleContactReminder();
+                        const preview = [
+                            'Please confirm before submit:',
+                            '- Name: ' + contactFlow.data.name,
+                            '- Email: ' + contactFlow.data.email,
+                            '- Subject: ' + contactFlow.data.subject,
+                            '- Description: ' + contactFlow.data.message,
+                            '',
+                            'Submit now? Reply with yes or no.'
+                        ].join('\n');
+                        return { type: 'reply', text: preview };
+                    }
+
+                    if (contactFlow.step === 'confirm_submit') {
+                        if (isNo(value)) {
+                            resetContactFlow();
+                            return { type: 'reply', text: 'Okay, I did not submit it. You can start again anytime by typing "send contact message".' };
+                        }
+                        if (!isYes(value)) {
+                            return { type: 'reply', text: 'Please reply with yes or no to confirm submission.' };
+                        }
+
+                        const payload = {
+                            name: contactFlow.data.name,
+                            email: contactFlow.data.email,
+                            subject: contactFlow.data.subject,
+                            message: contactFlow.data.message
+                        };
+
+                        resetContactFlow();
+                        return { type: 'submit', payload: payload };
+                    }
+
+                    return { type: 'reply', text: 'Let us continue. Please share the requested field, or type "cancel" to stop.' };
+                }
+
+                function submitContactFromChat(payload) {
+                    return fetch("{{ route('contactmessage.send') }}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': csrf || ''
+                        },
+                        body: JSON.stringify(payload)
+                    }).then(function (response) {
+                        return response.json().then(function (data) {
+                            return {
+                                ok: response.ok,
+                                data: data || {}
+                            };
+                        });
+                    });
+                }
+
                 function setOpen(isOpen) {
                     if (isOpen) {
                         panel.classList.add('is-open');
-                        setTimeout(function () { input.focus(); }, 40);
+                        setTimeout(function () {
+                            input.focus();
+                            updateSuggestionsVisibility();
+                        }, 40);
                     } else {
                         panel.classList.remove('is-open');
                     }
@@ -577,6 +874,44 @@
                 closeBtn.addEventListener('click', function () {
                     setOpen(false);
                 });
+
+                if (suggestionsWrap) {
+                    suggestionsWrap.addEventListener('click', function (event) {
+                        const toggleButton = event.target.closest('#aiAssistantSuggestionsToggle');
+                        if (toggleButton) {
+                            const isHidden = suggestionsDropdown ? suggestionsDropdown.classList.contains('is-hidden') : true;
+                            setSuggestionsVisible(isHidden);
+                            return;
+                        }
+
+                        const button = event.target.closest('.site-ai-assistant__suggestion');
+                        if (!button) {
+                            return;
+                        }
+
+                        const suggestion = button.getAttribute('data-suggestion') || button.textContent || '';
+                        input.value = suggestion;
+                        markSuggestionsSeen();
+                        updateSuggestionsVisibility();
+                        input.focus();
+                    });
+                }
+
+                input.addEventListener('input', function () {
+                    if (input.value.trim().length > 0) {
+                        markSuggestionsSeen();
+                    }
+
+                    updateSuggestionsVisibility();
+                });
+                input.addEventListener('focus', updateSuggestionsVisibility);
+                input.addEventListener('blur', function () {
+                    if (input.value.trim().length > 0) {
+                        setSuggestionsVisible(false);
+                    }
+                });
+
+                updateSuggestionsVisibility();
 
                 form.addEventListener('submit', function (event) {
                     event.preventDefault();
@@ -592,8 +927,56 @@
                         history.shift();
                     }
                     input.value = '';
+                    markSuggestionsSeen();
+                    updateSuggestionsVisibility();
+                    clearContactReminder();
 
-                    const loading = appendMessage('Thinking...', 'bot');
+                    if (contactFlow.active || shouldStartContactFlow(message)) {
+                        const flowResult = processContactFlowMessage(message);
+
+                        if (flowResult.type === 'reply') {
+                            appendMessage(flowResult.text, 'bot');
+                            if (contactFlow.active) {
+                                scheduleContactReminder();
+                            }
+                            return;
+                        }
+
+                        if (flowResult.type === 'submit') {
+                            const loading = appendMessage('Thanks. Sending your message now...', 'bot');
+
+                            submitContactFromChat(flowResult.payload)
+                                .then(function (result) {
+                                    if (!result.ok) {
+                                        const errors = result.data.errors || {};
+                                        const firstErrorKey = Object.keys(errors)[0] || null;
+                                        const firstError = firstErrorKey && Array.isArray(errors[firstErrorKey])
+                                            ? errors[firstErrorKey][0]
+                                            : null;
+
+                                        loading.innerHTML = formatAssistantMessage(firstError || result.data.message || 'I could not submit your contact request. Please try again.');
+                                        return;
+                                    }
+
+                                    const successText = (result.data && result.data.message)
+                                        ? result.data.message + ' Our team will contact you soon.'
+                                        : 'Your contact message was submitted successfully. Our team will contact you soon.';
+
+                                    loading.innerHTML = formatAssistantMessage(successText);
+                                    history.push({ role: 'assistant', content: successText });
+                                    if (history.length > 10) {
+                                        history.shift();
+                                    }
+                                })
+                                .catch(function () {
+                                    loading.innerHTML = formatAssistantMessage('Sorry, I could not submit your message due to a network issue. Please try again.');
+                                });
+
+                            return;
+                        }
+                    }
+
+                    const loading = appendMessage('Let me check that for you...', 'bot');
 
                     fetch("{{ route('assistant.ask') }}", {
                         method: 'POST',
@@ -624,22 +1007,24 @@
                                 const validationError = (firstErrorKey && Array.isArray(data.errors[firstErrorKey]) && data.errors[firstErrorKey][0])
                                     ? data.errors[firstErrorKey][0]
                                     : (data.message || null);
-                                loading.textContent = validationError
+                                const errorText = validationError
                                     ? validationError
                                     : 'Sorry, I could not process your question. Please try again.';
+                                loading.innerHTML = formatAssistantMessage(errorText);
                                 return;
                             }
 
-                            loading.textContent = (data && data.answer)
+                            const answerText = (data && data.answer)
                                 ? data.answer
                                 : 'Sorry, I could not find an answer right now.';
-                            history.push({ role: 'assistant', content: loading.textContent });
+                            loading.innerHTML = formatAssistantMessage(answerText);
+                            history.push({ role: 'assistant', content: answerText });
                             if (history.length > 10) {
                                 history.shift();
                             }
                         })
                         .catch(function () {
-                            loading.textContent = 'Sorry, something went wrong. Please try again.';
+                            loading.innerHTML = formatAssistantMessage('Sorry, something went wrong. Please try again.');
                         });
                 });
             })();
@@ -837,6 +1222,16 @@
                 margin-right: 22px;
             }
 
+            .site-ai-assistant__link {
+                color: #cc5e1b;
+                text-decoration: underline;
+                word-break: break-all;
+            }
+
+            .site-ai-assistant__link:hover {
+                color: #a24b15;
+            }
+
             .site-ai-assistant__message--user {
                 background: #f07b29;
                 color: #fff;
@@ -849,6 +1244,119 @@
                 padding: 10px;
                 gap: 8px;
                 background: #fff;
+            }
+
+            .site-ai-assistant__suggestions {
+                position: relative;
+                padding: 6px 10px 0;
+            }
+
+            .site-ai-assistant__suggestions.is-hidden {
+                display: none;
+            }
+
+            .site-ai-assistant__suggestion-shell {
+                position: relative;
+            }
+
+            .site-ai-assistant__suggestions-toggle {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                border: 1px solid #f0d9c8;
+                background: #fffaf5;
+                color: #7a3d1a;
+                border-radius: 999px;
+                padding: 6px 10px;
+                font-size: 11px;
+                font-weight: 700;
+                line-height: 1;
+                box-shadow: 0 4px 14px rgba(240, 123, 41, 0.08);
+            }
+
+            .site-ai-assistant__suggestions-toggle.is-active {
+                background: #fff3ea;
+                border-color: #f07b29;
+            }
+
+            .site-ai-assistant__suggestions-toggle__badge {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                min-width: 18px;
+                height: 18px;
+                padding: 0 5px;
+                border-radius: 999px;
+                background: #f07b29;
+                color: #fff;
+                font-size: 10px;
+                font-weight: 700;
+            }
+
+            .site-ai-assistant__suggestions-dropdown {
+                position: absolute;
+                left: 0;
+                bottom: calc(100% + 8px);
+                width: min(100%, 330px);
+                z-index: 3;
+                border: 1px solid #f0d9c8;
+                border-radius: 14px;
+                background: rgba(255, 255, 255, 0.98);
+                box-shadow: 0 18px 40px rgba(46, 38, 34, 0.14);
+                padding: 10px;
+                max-height: 180px;
+                overflow-y: auto;
+                overflow-x: hidden;
+            }
+
+            .site-ai-assistant__suggestions-dropdown.is-hidden {
+                display: none;
+            }
+
+            .site-ai-assistant__suggestions-title {
+                font-size: 10px;
+                font-weight: 700;
+                letter-spacing: 0.04em;
+                text-transform: uppercase;
+                color: #8c7a6f;
+                margin-bottom: 5px;
+            }
+
+            .site-ai-assistant__suggestions-grid {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 6px;
+                overflow: visible;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .site-ai-assistant__suggestion {
+                border: 1px solid #f0d9c8;
+                background: #fff;
+                color: #7a3d1a;
+                border-radius: 999px;
+                padding: 6px 10px;
+                font-size: 12px;
+                line-height: 1;
+                font-weight: 600;
+                transition: transform 0.18s ease, border-color 0.18s ease, background-color 0.18s ease, box-shadow 0.18s ease;
+                box-shadow: 0 4px 14px rgba(240, 123, 41, 0.08);
+                white-space: nowrap;
+                flex: 0 0 auto;
+            }
+
+            .site-ai-assistant__suggestion:hover {
+                transform: translateY(-1px);
+                border-color: #f07b29;
+                background: #fff7f0;
+                box-shadow: 0 6px 18px rgba(240, 123, 41, 0.12);
+            }
+
+            @media (max-width: 480px) {
+                .site-ai-assistant__suggestions-dropdown {
+                    width: min(100vw - 40px, 330px);
+                    max-height: 160px;
+                }
             }
 
             .site-ai-assistant__form input {

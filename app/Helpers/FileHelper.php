@@ -13,12 +13,8 @@ if (!function_exists('uploadFile')) {
 if (!function_exists('deleteFile')) {
     function deleteFile($filePath)
     {
-        // dd($filePath);
-        if ($filePath && Storage::exists('public/' . $filePath)) {
-            Storage::delete('public/' . $filePath);
+        if ($filePath && Storage::disk('public')->exists($filePath)) {
+            Storage::disk('public')->delete($filePath);
         }
     }
 }
-
-
-

@@ -3,224 +3,221 @@
 @section('content')
 <div class="container">
     <div class="page-inner">
-       <div class="row">
-          <div class="col-md-12">
-             <div class="card card-round">
-                <div class="card-header project-details-card-header">
-                   <div class="d-flex align-items-center">
-                      <h4 class="project-details-card-header-title"><i class='bx bxs-carousel bx-tada' ></i> Messages</h4>
-                   </div>
-                </div>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card card-round">
+                    <div class="card-header project-details-card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <h4 class="project-details-card-header-title mb-0"><i class='bx bxs-envelope bx-tada'></i> Contact Messages</h4>
 
-                <div class="card-body">
-                   <div class="table-responsive">
-                      <div id="add-row_wrapper" class="dataTables_wrapper container-fluid dt-bootstrap4">
-                         <div class="row">
-                            <div class="col-sm-12">
-                               <table id="messageTable" class="display table table-striped table-hover basic-datatables" role="grid" aria-describedby="add-row_info">
-                                  <thead class="">
+                        <div class="btn-group" role="group" aria-label="Message filters">
+                            <a href="{{ route('contact.messages') }}" class="btn btn-sm {{ ($activeFilter ?? 'all') === 'all' ? 'btn-primary' : 'btn-outline-primary' }}">All</a>
+                            <a href="{{ route('contact.messages.unread') }}" class="btn btn-sm {{ ($activeFilter ?? '') === 'unread' ? 'btn-primary' : 'btn-outline-primary' }}">Unread</a>
+                            <a href="{{ route('contact.messages.read') }}" class="btn btn-sm {{ ($activeFilter ?? '') === 'read' ? 'btn-primary' : 'btn-outline-primary' }}">Read</a>
+                        </div>
+                    </div>
 
-                                     <tr role="row">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table id="messageTable" class="display table table-striped table-hover basic-datatables">
+                                <thead>
+                                    <tr>
                                         <th style="width: 5%;">Sl</th>
-                                        <th style="width: 15%;">Name</th>
-                                        <th style="width: 10%;">Phone</th>
-                                        <th style="width: 10%;">Email</th>
-                                        <th style="width: 15%;">Subject</th>
-                                        <th style="width: 30%;">Message</th>
-                                        <th style="width: 7%;">Mark Read</th>
-                                        <th style="width: 8%;">View</th>
+                                        <th style="width: 14%;">Name</th>
+                                        <th style="width: 11%;">Phone</th>
+                                        <th style="width: 15%;">Email</th>
+                                        <th style="width: 14%;">Subject</th>
+                                        <th style="width: 24%;">Message</th>
+                                        <th style="width: 8%;">Status</th>
+                                        <th style="width: 9%;">Actions</th>
                                     </tr>
-                                  </thead>
-                                  <tbody></tbody>
-                               </table>
-                            </div>
-                         </div>
-                      </div>
-                   </div>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
-
-             </div>
-          </div>
-       </div>
+            </div>
+        </div>
     </div>
- </div>
-
-
-
-
-
-<!-- ... your table and scripts -->
-
-@include('admin.contact-message.message-view-modal')
-
-
-
-<link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-
-
- <!-- jQuery (one version only!) -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-<!-- Bootstrap 5 JS (after jQuery) -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-
-<!-- DataTables -->
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
-<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-
-<!-- SweetAlert2 CDN -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-
-<!-- Your custom script that uses $('#messageTable').DataTable() -->
-<script>
-  $(document).ready(function () {
-    $('#messageTable').DataTable();
-  });
-</script>
-
+</div>
 
 @endsection
 
-
 @push('script')
-
-
 <script>
 $(document).ready(function () {
+    const activeFilter = @json($activeFilter ?? 'all');
+    const table = $('#messageTable').DataTable({
+        pageLength: 10,
+        order: [[0, 'desc']],
+        destroy: true,
+        data: [],
+        columns: [
+            { data: 'sl' },
+            { data: 'name' },
+            { data: 'phone' },
+            { data: 'email' },
+            { data: 'subject' },
+            { data: 'message' },
+            { data: 'status' },
+            { data: 'actions', orderable: false, searchable: false }
+        ]
+    });
+
+    function safeText(value) {
+        return $('<div>').text(value ?? '').html();
+    }
+
+    function truncateText(value, length) {
+        const text = String(value ?? '');
+        if (text.length <= length) {
+            return text;
+        }
+        return text.substring(0, length) + '...';
+    }
+
+    function getStatusBadge(isUnread) {
+        if (isUnread) {
+            return '<span class="badge bg-warning text-dark">Unread</span>';
+        }
+        return '<span class="badge bg-success">Read</span>';
+    }
+
     function loadMessages() {
         $.ajax({
-            url: '/dashboard/api/messages', // API endpoint
+            url: '/dashboard/api/messages',
             type: 'GET',
+            data: { filter: activeFilter },
             success: function (data) {
-                let tbody = $('#messageTable tbody');
-                tbody.empty(); // Clear existing rows
+                const rows = (data || []).map(function (message, index) {
+                    const serviceName = message.service && message.service.service_name ? message.service.service_name : '';
+                    const subject = serviceName ? ('Service: ' + serviceName + (message.subject ? ' | ' + message.subject : '')) : (message.subject || 'N/A');
+                    const isUnread = !!message.status;
+                    const nextStatus = 0;
+                    const toggleTitle = isUnread ? 'Mark as Read' : 'Already Read';
+                    const toggleClass = isUnread ? 'btn-success' : 'btn-secondary disabled';
+                    const showUrl = `/dashboard/messages/${message.id}`;
 
-                if (data.length === 0) {
-                    tbody.append('<tr><td colspan="6" class="text-center">No messages found</td></tr>');
-                    return;
-                }
-
-                $.each(data, function (index, message) {
-                    let row = `
-                        <tr>
-                            <td>${index + 1}</td>
-                            <td>${message.name}</td>
-                            <td>${message.phone?? ''}</td>
-                            <td>${message.email}</td>
-                            <td>
-                                ${message.service ? `<b>Service: ${message.service.service_name}</b><br> ` : ''}
-                                ${message.subject ?? ''}
-                            </td>
-                            <td>${message.message}</td>
-                            <td><input type="checkbox" class="status-toggle" data-id="${message.id}" ${message.status ? '' : 'checked'}></td>
-                            <td>
-                                <button class="btn btn-sm btn-info view-message"
-                                    data-name="${message.name}"
-                                    data-phone="${message.phone ?? ''}"
-                                    data-email="${message.email}"
-                                    data-service="${message.service?.service_name || ''}"
-                                    data-subject="${message.subject ?? ''}"
-                                    data-message="${message.message}">
+                    return {
+                        sl: index + 1,
+                        name: safeText(message.name),
+                        phone: safeText(message.phone || 'N/A'),
+                        email: safeText(message.email || 'N/A'),
+                        subject: safeText(subject),
+                        message: safeText(truncateText(message.message, 100)),
+                        status: getStatusBadge(isUnread),
+                        actions: `
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a class="btn btn-info" href="${showUrl}" title="View message">
                                     <i class='bx bx-show'></i>
+                                </a>
+                                <button class="btn ${toggleClass} status-toggle" data-id="${message.id}" data-status="${nextStatus}" title="${toggleTitle}" ${isUnread ? '' : 'disabled'}>
+                                    <i class='bx ${isUnread ? 'bx-check-circle' : 'bx-lock-alt'}'></i>
                                 </button>
-                            </td>
-                        </tr>
-                    `;
-                    tbody.append(row);
+                                <button class="btn btn-danger delete-message" data-id="${message.id}" title="Delete">
+                                    <i class='bx bx-trash'></i>
+                                </button>
+                            </div>
+                        `
+                    };
                 });
+
+                table.clear().rows.add(rows).draw();
             },
             error: function () {
-                alert('Failed to load messages.');
+                Swal.fire('Error', 'Failed to load messages.', 'error');
             }
         });
     }
 
-
-
-
-    // Event delegation since checkboxes are loaded dynamically
-    $(document).on('change', '.status-toggle', function () {
-        const checkbox = $(this);
-        const messageId = checkbox.data('id');
-        const newStatus = checkbox.is(':checked') ? 0 : 1;
-
-        // Revert toggle immediately
-        checkbox.prop('checked', !checkbox.prop('checked'));
+    $(document).on('click', '.status-toggle', function () {
+        const button = $(this);
+        if (button.is(':disabled')) {
+            return;
+        }
+        const messageId = button.data('id');
+        const newStatus = Number(button.data('status'));
+        const actionLabel = 'mark this message as read';
 
         Swal.fire({
             title: 'Are you sure?',
-            text: newStatus === 0 ? 'Mark this message as unread?' : 'Mark this message as read?',
+            text: `Do you want to ${actionLabel}?`,
             icon: 'question',
             showCancelButton: true,
             confirmButtonColor: '#3085d6',
             cancelButtonColor: '#d33',
-            confirmButtonText: 'Yes, Read it!'
+            confirmButtonText: 'Yes'
         }).then((result) => {
-            if (result.isConfirmed) {
-                $.ajax({
-                    url: `/dashboard/api/messages/${messageId}/status`,
-                    type: 'POST',
-                    data: {
-                        status: newStatus
-                    },
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-                    success: function (response) {
-                        Swal.fire({
-                            toast: true,
-                            position: 'top-end',
-                            icon: 'success',
-                            title: response.message,
-                            showConfirmButton: false,
-                            timer: 2000,
-                            timerProgressBar: true
-                        });
-                        loadMessages();
-                    },
-                    error: function () {
-                        Swal.fire('Error', 'Failed to update status.', 'error');
-                    }
-                });
+            if (!result.isConfirmed) {
+                return;
             }
+
+            $.ajax({
+                url: `/dashboard/api/messages/${messageId}/status`,
+                type: 'POST',
+                data: { status: newStatus },
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function (response) {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: response.message,
+                        showConfirmButton: false,
+                        timer: 1800
+                    });
+                    loadMessages();
+                },
+                error: function () {
+                    Swal.fire('Error', 'Failed to update status.', 'error');
+                }
+            });
         });
     });
 
+    $(document).on('click', '.delete-message', function () {
+        const messageId = $(this).data('id');
 
+        Swal.fire({
+            title: 'Are you sure?',
+            text: 'This message will be permanently deleted.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#e3342f',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, delete it'
+        }).then((result) => {
+            if (!result.isConfirmed) {
+                return;
+            }
 
-
-
-    // show message in detail in the modal
-    $(document).on('click', '.view-message', function () {
-        const name = $(this).data('name');
-        const phone = $(this).data('phone');
-        const email = $(this).data('email');
-        const service = $(this).data('service');
-        const subject = $(this).data('subject');
-        const message = $(this).data('message');
-
-        // Fill modal
-        $('#modalName').text(name);
-        $('#modalPhone').text(phone);
-        $('#modalEmail').text(email);
-        $('#modalService').text(service);
-        $('#modalSubject').text(subject);
-        $('#modalMessage').text(message);
-
-        // Show modal
-        $('#messageModal').modal('show');
+            $.ajax({
+                url: `/dashboard/api/messages/${messageId}`,
+                type: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function (response) {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: response.message,
+                        showConfirmButton: false,
+                        timer: 1800
+                    });
+                    loadMessages();
+                },
+                error: function () {
+                    Swal.fire('Error', 'Failed to delete message.', 'error');
+                }
+            });
+        });
     });
 
-
-
-    // Call it on page load
     loadMessages();
 });
 </script>
-
 @endpush

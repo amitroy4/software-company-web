@@ -203,6 +203,8 @@ Route::middleware(['auth:admin', 'verified'])->group(function () {
         Route::get('/messages', 'contactMessages')->name('contact.messages');
         Route::get('/messages/unread', 'unreadContactMessages')->name('contact.messages.unread');
         Route::get('/messages/read', 'readContactMessages')->name('contact.messages.read');
+        Route::get('/messages/{id}', 'showMessage')->name('contact.messages.show');
+        Route::get('/messages/open/{id}', 'openMessage')->name('contact.messages.open');
 
         Route::get('/api/messages', 'apiMessages')->name('api.messages');
         Route::get('/api/read/messages', 'readMessages')->name('api.read.messages');
