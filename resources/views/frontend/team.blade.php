@@ -1,5 +1,9 @@
 @extends('layouts.frontend')
 @section('title','Team')
+@php($teamCount = ($managements?->count() ?? 0) + ($members?->count() ?? 0))
+@section('meta_title', 'Powerhouse Team')
+@section('meta_description', 'Meet the InfyraSoft powerhouse team of ' . $teamCount . '+ professionals delivering software, product, and digital innovation solutions.')
+@section('meta_keywords', 'InfyraSoft team, software team, management team, developers, designers')
 @section('content')
 <!-- /.page-header -->
 <section class="hero aos-init aos-animate" data-aos="fade">
@@ -28,14 +32,14 @@
 <!-- /.page-header -->
 <!-- /.team-two -->
 <section class="team-two" style="background-image: url({{ asset('frontend') }}/assets/images/team-2-bg.png);">
-   <div class="container-fluid">
+   <div class="container">
       <div class="sec-title-four text-center">
          <h6 class="sec-title-three__tagline"><span class="sec-title-three__tagline__left-border"></span>OUR TEAM MEMBER<span class="sec-title-three__tagline__right-border"></span></h6>
          <!-- /.sec-title-four__tagline -->
          <h3 class="sec-title-two__title"><span>Management</span> Body</h3>
          <!-- /.sec-title-four__title -->
       </div>
-      <div class="row row-cols-1 row-cols-sm-2 row-cols-md-2 row-cols-lg-3 row-cols-xl-3 row-cols-xxl-5 mt-4 d-flex justify-content-center">
+      <div class="row row-cols-1 row-cols-sm-2 row-cols-md-2 row-cols-lg-3 row-cols-xl-3 row-cols-xxl-4 mt-4 d-flex justify-content-center">
         @foreach ($managements as $management)
         <div class="col pt-4">
             <div class="team-card-four wow fadeInUp animated animated" data-wow-duration="1500ms" data-wow-delay="00ms" style="visibility: visible; animation-duration: 1500ms; animation-delay: 0ms; animation-name: fadeInUp;">

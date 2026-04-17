@@ -30,8 +30,7 @@ class ServiceController extends Controller
     }
     private function handleFileUpload($file, $path)
     {
-        $fileName = uniqid() . '.' . $file->getClientOriginalExtension();
-        return $file->storeAs('uploads/' . $path, $fileName, 'public');
+        return \uploadFile($file, $path);
     }
 
     private function handleFileDelete($filePath)
@@ -282,7 +281,7 @@ class ServiceController extends Controller
             'url' => $request->url,
         ];
         if ($request->hasFile('logo')) {
-            $data['logo'] = $request->file('logo')->store('service_clients', 'public');
+            $data['logo'] = \storePublicFileOptimized($request->file('logo'), 'service_clients');
         }
         ServiceClient::create($data);
         return redirect()->back()->with('success', 'Client added successfully')->with('activeTab', 'provideClient');

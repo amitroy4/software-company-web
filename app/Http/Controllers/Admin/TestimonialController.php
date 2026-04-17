@@ -18,8 +18,7 @@ class TestimonialController extends Controller
     }
     private function handleFileUpload($file, $path)
     {
-        $fileName = uniqid() . '.' . $file->getClientOriginalExtension();
-        return $file->storeAs('uploads/' . $path, $fileName, 'public');
+        return \uploadFile($file, $path);
     }
 
     private function handleFileDelete($filePath)

@@ -5,11 +5,46 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>@yield('title') | {{$setting->company_name}}</title>
+        @php
+            $companyName = $setting->company_name ?? config('app.name', 'InfyraSoft');
+            $pageTitle = trim($__env->yieldContent('meta_title', $__env->yieldContent('title', $companyName)));
+            $metaTitle = $pageTitle !== '' ? $pageTitle : $companyName;
+            $fullTitle = $metaTitle === $companyName ? $companyName : $metaTitle . ' | ' . $companyName;
+
+            $defaultDescription = trim(strip_tags($setting->description ?? 'InfyraSoft provides business software, web development, and digital solutions.'));
+            $metaDescription = trim(strip_tags($__env->yieldContent('meta_description', $defaultDescription)));
+            if ($metaDescription === '') {
+                $metaDescription = 'InfyraSoft provides business software, web development, and digital solutions.';
+            }
+
+            $metaKeywords = trim($__env->yieldContent('meta_keywords', 'software company, web development, mobile app development, erp, digital solutions'));
+            $canonicalUrl = trim($__env->yieldContent('canonical_url', url()->current()));
+            $robots = trim($__env->yieldContent('meta_robots', 'index,follow'));
+            $ogType = trim($__env->yieldContent('og_type', 'website'));
+            $ogImage = trim($__env->yieldContent('og_image', $setting && $setting->logo_dark ? asset('storage/' . $setting->logo_dark) : asset('frontend/assets/images/logo-dark.png')));
+            $twitterCard = trim($__env->yieldContent('twitter_card', 'summary_large_image'));
+        @endphp
+
+        <title>{{ $fullTitle }}</title>
+        <meta name="description" content="{{ $metaDescription }}" />
+        <meta name="keywords" content="{{ $metaKeywords }}" />
+        <meta name="robots" content="{{ $robots }}" />
+        <link rel="canonical" href="{{ $canonicalUrl }}" />
+
+        <meta property="og:locale" content="en_US" />
+        <meta property="og:type" content="{{ $ogType }}" />
+        <meta property="og:title" content="{{ $fullTitle }}" />
+        <meta property="og:description" content="{{ $metaDescription }}" />
+        <meta property="og:url" content="{{ $canonicalUrl }}" />
+        <meta property="og:site_name" content="{{ $companyName }}" />
+        <meta property="og:image" content="{{ $ogImage }}" />
+
+        <meta name="twitter:card" content="{{ $twitterCard }}" />
+        <meta name="twitter:title" content="{{ $fullTitle }}" />
+        <meta name="twitter:description" content="{{ $metaDescription }}" />
+        <meta name="twitter:image" content="{{ $ogImage }}" />
         <!-- favicons Icons -->
         <!--<link rel="manifest" href="{{ asset('frontend') }}/assets/images/favicons/site.webmanifest" />-->
-        <meta name="description" content="InfyraSoft is a modern php Template for Business, It Solution, Corporate, Agency, Portfolio shops. The template perfectly fits Beauty Spa, Salon, and Wellness
-         Treatments websites and businesses." />
 
         <link rel="icon" href="{{ asset('storage/' . ($setting->favicon ?? 'default-favicon.ico')) }}"  />
 
@@ -1028,9 +1063,40 @@
                         });
                 });
             })();
+
+            (function () {
+                const stickyHeaders = Array.from(document.querySelectorAll('.sticky-header--cloned'));
+                if (!stickyHeaders.length) {
+                    return;
+                }
+
+                stickyHeaders.forEach(function (header) {
+                    header.classList.remove('sticky-header--normal');
+                });
+
+                function syncStickyVisibility() {
+                    const isActive = window.scrollY > 10;
+                    stickyHeaders.forEach(function (header) {
+                        header.classList.toggle('active', isActive);
+                    });
+                }
+
+                syncStickyVisibility();
+                window.addEventListener('scroll', syncStickyVisibility, { passive: true });
+            })();
         </script>
 
         <style>
+            .main-header-six.sticky-header--cloned {
+                z-index: 10010 !important;
+            }
+
+            .main-header-six.sticky-header--cloned.active {
+                transform: translateY(0) !important;
+                visibility: visible !important;
+                opacity: 1;
+            }
+
             .search-popup__content {
                 position: relative;
             }

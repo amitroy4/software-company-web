@@ -66,7 +66,7 @@ class SettingController extends Controller
 
                     // Store new file with unique filename
                     $filename = $field . '-' . time() . '.' . $request->file($field)->getClientOriginalExtension();
-                    $path = $request->file($field)->storeAs('settings', $filename, 'public');
+                    $path = \storePublicFileOptimized($request->file($field), 'settings', $filename);
                     $setting->$field = $path;
                 }
             }

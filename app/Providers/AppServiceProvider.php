@@ -4,11 +4,9 @@ namespace App\Providers;
 
 use App\Models\Setting;
 use App\Models\CoverImage;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\View;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
-use App\Models\Admin\SystemConfiguration\CompanyInformation;
 use App\Models\Service;
 
 class AppServiceProvider extends ServiceProvider
@@ -24,21 +22,28 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Bootstrap any application services.
      */
-public function boot(): void
-{
-    View::composer('*', function ($view) {
+    public function boot(): void
+    {
+        $setting = Cache::remember('site:setting:first', now()->addMinutes(5), function () {
+            return Setting::query()->first();
+        });
 
+        View::share('setting', $setting);
 
-        $allCoverImages = CoverImage::all();
-        view()->share('allCoverImages', $allCoverImages);
+        View::composer(['layouts.frontend', 'frontend.*'], function ($view) {
+            $allCoverImages = Cache::remember('site:cover-images:active', now()->addMinutes(5), function () {
+                return CoverImage::query()->select('id', 'page_name', 'cover_image')->get();
+            });
 
-        $setting = Setting::first();
-        $view->with('setting', $setting);
+            $frontendservices = Cache::remember('site:frontend-services:active', now()->addMinutes(5), function () {
+                return Service::query()
+                    ->where('status', 1)
+                    ->select('id', 'slug', 'service_name')
+                    ->get();
+            });
 
-
-        $frontendservices = Service::where('status', 1)->get();
-        $view->with('frontendservices', $frontendservices);
-
-    });
-}
+            $view->with('allCoverImages', $allCoverImages);
+            $view->with('frontendservices', $frontendservices);
+        });
+    }
 }
