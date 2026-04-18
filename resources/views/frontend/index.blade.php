@@ -600,13 +600,19 @@
                                     </ul>
                                     <ul class="about-four__content__list">
                                         <li>
-                                            <p><i class='bx bx-chip me-2'></i>{{ $service->service_keypoint_1 }}</p>
+                                            @if ($service->service_keypoint_1)
+                                                <p><i class='bx bx-chip me-2'></i>{{ $service->service_keypoint_1 }}</p>
+                                            @endif
                                         </li>
                                         <li>
-                                            <p><i class='bx bx-chip me-2'></i>{{ $service->service_keypoint_2 }}</p>
+                                            @if ($service->service_keypoint_2)
+                                                <p><i class='bx bx-chip me-2'></i>{{ $service->service_keypoint_2 }}</p>
+                                            @endif
                                         </li>
                                         <li>
-                                            <p><i class='bx bx-chip me-2'></i>{{ $service->service_keypoint_3 }}</p>
+                                            @if ($service->service_keypoint_3)
+                                                <p><i class='bx bx-chip me-2'></i>{{ $service->service_keypoint_3 }}</p>
+                                            @endif
                                         </li>
                                     </ul>
                                     <a class="blog-card-five__rm" href="{{ route('service.details', $service->slug) }}"><i

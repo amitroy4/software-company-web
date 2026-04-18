@@ -38,7 +38,15 @@ class AppServiceProvider extends ServiceProvider
             $frontendservices = Cache::remember('site:frontend-services:active', now()->addMinutes(5), function () {
                 return Service::query()
                     ->where('status', 1)
-                    ->select('id', 'slug', 'service_name')
+                    ->select(
+                        'id',
+                        'slug',
+                        'service_name',
+                        'image',
+                        'service_keypoint_1',
+                        'service_keypoint_2',
+                        'service_keypoint_3'
+                    )
                     ->get();
             });
 
