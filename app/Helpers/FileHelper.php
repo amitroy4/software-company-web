@@ -65,6 +65,12 @@ if (!function_exists('optimizeImageBinary')) {
                 }
                 $source = @imagecreatefrompng($realPath);
                 break;
+            case 'image/gif':
+                if (!function_exists('imagecreatefromgif') || !function_exists('imagegif')) {
+                    return null;
+                }
+                $source = @imagecreatefromgif($realPath);
+                break;
             case 'image/webp':
                 if (!function_exists('imagecreatefromwebp') || !function_exists('imagewebp')) {
                     return null;
@@ -96,6 +102,9 @@ if (!function_exists('optimizeImageBinary')) {
                 imagesavealpha($source, true);
                 $written = imagepng($source, null, 7);
                 break;
+            case 'image/gif':
+                $written = imagegif($source);
+                break;
             case 'image/webp':
                 $written = imagewebp($source, null, 80);
                 break;
@@ -126,7 +135,7 @@ if (!function_exists('downscaleImageResource')) {
         $newHeight = max(1, (int) floor($height * $ratio));
 
         $canvas = imagecreatetruecolor($newWidth, $newHeight);
-        if ($mime === 'image/png' || $mime === 'image/webp') {
+        if ($mime === 'image/png' || $mime === 'image/webp' || $mime === 'image/gif') {
             imagealphablending($canvas, false);
             imagesavealpha($canvas, true);
             $transparent = imagecolorallocatealpha($canvas, 0, 0, 0, 127);
